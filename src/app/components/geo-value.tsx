@@ -16,12 +16,12 @@ const pulse = stylex.keyframes({
 const styles = stylex.create({
   infoValue: {
     display: 'block',
-    marginTop: 2,
-    fontSize: { default: 14, [bp.large]: 16 },
-    fontWeight: 500,
+    marginTop: { default: 6, [bp.large]: 8 },
+    fontSize: { default: 16, [bp.large]: 19 },
+    fontWeight: 400,
     lineHeight: 1.3,
     color: colors.ink,
-    fontVariantNumeric: 'tabular-nums',
+    fontVariantNumeric: 'lining-nums tabular-nums',
     overflowWrap: 'anywhere'
   },
   empty: { color: colors.inkFaint },

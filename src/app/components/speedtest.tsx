@@ -1,59 +1,56 @@
 import * as stylex from '@stylexjs/stylex';
 import { ComposeContextProvider } from 'foxact/compose-context-provider';
-import { CameraIcon, EyeIcon, EyeOffIcon, PlayIcon, RotateCwIcon, SquareIcon } from 'lucide-react';
+import { PlayIcon, RotateCwIcon, SquareIcon } from 'lucide-react';
 import { Connections } from './connections';
 import { DirectionSection } from './direction-section';
 import { GeoValue } from './geo-value';
 import { PrivacyToggle } from './privacy-toggle';
 import { RegionMenu } from './region-menu';
-import { ScreenshotButton } from './screenshot-button';
-import { SpeedReadout } from './speed-readout';
+import { SpeedReadout, SpeedTrend } from './speed-readout';
 import { CapturingProvider, ChoiceProvider, DownloadProvider, JitterProvider, LatencyProvider, ModeProvider, PhaseProvider, RedactedProvider, RootProvider, UploadProvider } from '@/context/speedtest';
 import { SpeedtestRoot } from './speedtest-root';
 import { StartButton } from './start-button';
 import { StatValue } from './stat-value';
 import type { StatKey } from './stat-value';
-import { ThemeMenu } from '@/components/theme-menu';
 import { bp } from '../../styles/breakpoints.stylex';
 import { colors, fonts } from '../../styles/tokens.stylex';
 import type { Target } from '@/lib/targets';
 
 const styles = stylex.create({
-  // Slim bar (wordmark, menu) on top; the toolbar wraps to its own full-width row beneath.
+  // Frameless: nothing is boxed; rows are divided by space and a single hairline above the info.
   header: {
     display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    rowGap: { default: 16, [bp.mobile]: 12, [bp.large]: 20 },
-    marginBottom: { default: 4, [bp.large]: 8 }
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 16,
+    marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 64 }
   },
   wordmark: {
     fontFamily: fonts.condensed,
-    fontSize: { default: 22, [bp.large]: 28 },
-    fontWeight: 500,
-    lineHeight: 1,
-    // The face's ascent spans the whole em with the descent below it, so the lowercase glyphs
-    // sit about 0.15em below the box centre; this lines them up with the header controls.
-    transform: 'translateY(-0.13em)',
-    letterSpacing: '-0.01em',
+    fontSize: { default: 28, [bp.large]: 30 },
+    fontWeight: 300,
+    lineHeight: 1.1,
+    letterSpacing: '0.01em',
     whiteSpace: 'nowrap'
   },
-  wordmarkDomain: { color: colors.inkMuted },
-  menu: {
+  wordmarkDomain: { color: colors.inkFaint },
+  // Start, the connection toggle and the two latency readings share one baseline.
+  controls: {
     display: 'flex',
-    alignItems: 'center',
-    gap: 4,
-    marginLeft: 'auto'
+    flexWrap: 'wrap',
+    alignItems: 'flex-end',
+    columnGap: { default: 40, [bp.large]: 72 },
+    rowGap: { default: 20, [bp.mobile]: 16 },
+    marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 72 }
   },
-  // Quarters line up with the four stat cards below; phones go two-up.
-  toolbar: {
-    display: 'grid',
-    gridTemplateColumns: {
-      default: 'repeat(4, minmax(0, 1fr))',
-      [bp.mobile]: 'repeat(2, minmax(0, 1fr))'
-    },
-    gap: { default: 12, [bp.mobile]: 10, [bp.large]: 16 },
-    flexBasis: '100%'
+  capsLabel: {
+    marginBottom: { default: 8, [bp.large]: 10 },
+    fontSize: { default: 10, [bp.large]: 11 },
+    fontWeight: 400,
+    fontVariantCaps: 'all-small-caps',
+    letterSpacing: '0.16em',
+    lineHeight: 1.3,
+    color: colors.inkFaint
   },
   directions: {
     display: 'grid',
@@ -61,89 +58,74 @@ const styles = stylex.create({
       default: 'repeat(2, minmax(0, 1fr))',
       [bp.mobile]: 'minmax(0, 1fr)'
     },
-    gap: { default: 12, [bp.mobile]: 10, [bp.large]: 16 }
+    columnGap: { default: 48, [bp.large]: 96 },
+    rowGap: { default: 40, [bp.mobile]: 32 },
+    marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 72 }
   },
-  panel: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: { default: 10, [bp.mobile]: 6, [bp.large]: 14 },
-    paddingTop: { default: 20, [bp.mobile]: 16, [bp.large]: 28 },
-    paddingInline: { default: 20, [bp.mobile]: 16, [bp.large]: 28 },
-    borderRadius: { default: 16, [bp.large]: 20 },
-    backgroundColor: colors.raised,
-    overflow: 'hidden'
-  },
-  label: {
+  directionLabel: {
     display: 'flex',
     alignItems: 'center',
-    gap: 6,
-    fontSize: { default: 14, [bp.large]: 15 },
+    gap: 8,
+    marginBottom: { default: 12, [bp.large]: 14 },
+    fontSize: { default: 11, [bp.large]: 12 },
+    fontWeight: 400,
+    fontVariantCaps: 'all-small-caps',
+    letterSpacing: '0.16em',
     lineHeight: 1.25,
-    color: colors.inkMuted
+    color: colors.inkFaint
   },
   arrow: {
-    width: 12,
-    height: 12,
+    width: 11,
+    height: 11,
     flexShrink: 0
   },
   arrowDown: { color: colors.download },
   arrowUp: { color: colors.upload, transform: 'rotate(180deg)' },
+  chart: {
+    width: '100%',
+    height: { default: 56, [bp.mobile]: 48 },
+    marginTop: { default: 18, [bp.large]: 22 }
+  },
   stats: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: { default: 12, [bp.mobile]: 10, [bp.large]: 16 }
-  },
-  stat: {
-    paddingBlock: { default: 10, [bp.large]: 14 },
-    paddingInline: { default: 14, [bp.mobile]: 12, [bp.large]: 16 },
-    borderRadius: 16,
-    backgroundColor: colors.raised
-  },
-  statFill: { height: '100%' },
-  infoCard: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: { default: 14, [bp.mobile]: 12, [bp.large]: 18 },
-    padding: { default: 16, [bp.mobile]: 12, [bp.large]: 24 },
-    borderRadius: { default: 16, [bp.large]: 20 },
-    backgroundColor: colors.raised
+    flexWrap: 'wrap',
+    columnGap: { default: 40, [bp.large]: 64 },
+    rowGap: { default: 20, [bp.mobile]: 16 },
+    marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 72 }
   },
-  // Each item starts from the width its text needs and the leftover is shared out, so the row is
-  // always filled; when IP and location leave no room, the whole provider item wraps to a second
-  // line rather than any value being squeezed.
   info: {
     display: 'flex',
     flexWrap: 'wrap',
-    flexDirection: { default: 'row', [bp.mobile]: 'column' },
-    columnGap: { default: 32, [bp.large]: 48 },
-    rowGap: { default: 12, [bp.mobile]: 8, [bp.large]: 16 }
-  },
-  infoItem: {
-    flexGrow: 1,
-    flexBasis: 'auto',
-    maxWidth: '100%'
+    columnGap: { default: 40, [bp.large]: 80 },
+    rowGap: { default: 16, [bp.mobile]: 14 },
+    paddingTop: { default: 20, [bp.large]: 28 },
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
+    borderTopColor: colors.line
   },
   infoLabel: {
-    fontSize: { default: 13, [bp.large]: 14 },
+    fontSize: { default: 10, [bp.large]: 11 },
+    fontWeight: 400,
+    fontVariantCaps: 'all-small-caps',
+    letterSpacing: '0.16em',
     lineHeight: 1.3,
-    color: colors.inkMuted
+    color: colors.inkFaint
   },
   footnote: {
     display: 'flex',
     flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'baseline',
     gap: 8,
-    paddingTop: { default: 12, [bp.mobile]: 10, [bp.large]: 14 },
-    borderTopWidth: 1,
-    borderTopStyle: 'solid',
-    borderTopColor: `color-mix(in srgb, ${colors.line} 50%, transparent)`,
-    fontSize: { default: 13, [bp.large]: 14 },
+    marginTop: { default: 16, [bp.large]: 20 },
+    fontSize: { default: 11, [bp.large]: 12 },
+    fontWeight: 400,
+    fontVariantCaps: 'all-small-caps',
+    letterSpacing: '0.16em',
     lineHeight: 1.3,
-    color: colors.inkMuted
+    color: colors.inkFaint
   },
   footnoteLink: {
-    color: colors.ink,
+    color: colors.inkMuted,
     textDecorationLine: 'underline',
     textDecorationColor: { default: colors.line, ':hover': colors.ink },
     textUnderlineOffset: 3,
@@ -151,27 +133,14 @@ const styles = stylex.create({
     transitionDuration: '150ms'
   },
   hidden: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-    height: 22,
-    paddingInline: 8,
-    borderRadius: 999,
-    backgroundColor: colors.control,
-    color: colors.inkMuted,
-    fontSize: 12,
-    fontWeight: 500,
-    verticalAlign: 'middle'
+    fontVariantCaps: 'all-small-caps',
+    letterSpacing: '0.12em',
+    color: colors.inkFaint
   }
 });
 
 /** Stands in for a masked value so a screenshot reads as deliberate redaction. */
-const hiddenJsx = (
-  <span {...stylex.props(styles.hidden)}>
-    <EyeOffIcon size={12} strokeWidth={1.8} aria-hidden />
-    Hidden
-  </span>
-);
+const hiddenJsx = <span {...stylex.props(styles.hidden)}>Hidden</span>;
 
 /** One `createContextState` per concern, so a leaf re-renders only for the state it reads. */
 const contexts = [
@@ -198,84 +167,72 @@ export function Speedtest({ targets }: SpeedtestProps) {
     <ComposeContextProvider contexts={contexts}>
       <SpeedtestRoot>
         <header {...stylex.props(styles.header)}>
-          <div>
-            <h1 {...stylex.props(styles.wordmark)}>
-              speed<span {...stylex.props(styles.wordmarkDomain)}>.skk.moe</span>
-            </h1>
-          </div>
-          <div data-screenshot="hide" {...stylex.props(styles.menu)}>
-            <ScreenshotButton>
-              <CameraIcon size={18} strokeWidth={1.8} aria-hidden />
-              Screenshot
-            </ScreenshotButton>
-            <RegionMenu targets={targets} />
-            <ThemeMenu />
-          </div>
-          <div {...stylex.props(styles.toolbar)}>
-            <StartButton
-              targets={targets}
-              idleSlot={<><PlayIcon size={16} strokeWidth={2} fill="currentColor" aria-hidden />Start test</>}
-              runningSlot={<><SquareIcon size={14} strokeWidth={2} fill="currentColor" aria-hidden />Stop</>}
-              doneSlot={<><RotateCwIcon size={16} strokeWidth={2} aria-hidden />Test again</>}
-            />
-            <div {...stylex.props(styles.stat)}>
-              <div {...stylex.props(styles.label)}>Connections</div>
-              <Connections />
-            </div>
-            <dl>
-              <Stat label="Latency" stat="latency" />
-            </dl>
-            <dl>
-              <Stat label="Jitter" stat="jitter" />
-            </dl>
-          </div>
+          <h1 {...stylex.props(styles.wordmark)}>
+            speed<span {...stylex.props(styles.wordmarkDomain)}>.inshadow.uk</span>
+          </h1>
+          <RegionMenu targets={targets} />
         </header>
 
-        <div {...stylex.props(styles.directions)}>
-          <DirectionSection direction="download" targets={targets}>
-            <Panel direction="download" label="Download" />
-            <dl {...stylex.props(styles.stats)}>
-              <Stat label="Download latency" stat="downloadLatency" />
-              <Stat label="Downloaded" stat="downloaded" />
-            </dl>
-          </DirectionSection>
-          <DirectionSection direction="upload" targets={targets}>
-            <Panel direction="upload" label="Upload" />
-            <dl {...stylex.props(styles.stats)}>
-              <Stat label="Upload latency" stat="uploadLatency" />
-              <Stat label="Uploaded" stat="uploaded" />
-            </dl>
-          </DirectionSection>
+        <div {...stylex.props(styles.controls)}>
+          <StartButton
+            targets={targets}
+            idleSlot={<><PlayIcon size={11} strokeWidth={2} fill="currentColor" aria-hidden />Start test</>}
+            runningSlot={<><SquareIcon size={10} strokeWidth={2} fill="currentColor" aria-hidden />Stop</>}
+            doneSlot={<><RotateCwIcon size={12} strokeWidth={2} aria-hidden />Test again</>}
+          />
+          <div>
+            <div {...stylex.props(styles.capsLabel)}>Connections</div>
+            <Connections />
+          </div>
+          <dl>
+            <Stat label="Latency" stat="latency" />
+          </dl>
+          <dl>
+            <Stat label="Jitter" stat="jitter" />
+          </dl>
         </div>
 
-        <section {...stylex.props(styles.infoCard)}>
-          <dl {...stylex.props(styles.info)}>
-            <Info label="IP address" field="ip" hiddenSlot={hiddenJsx} />
-            <Info label="Location" field="location" />
-            <Info label="Provider" field="isp" hiddenSlot={hiddenJsx} />
-          </dl>
-          <p data-screenshot="hide" {...stylex.props(styles.footnote)}>
-            <span>
-              Learn more about your IP at
-              {' '}
-              {/* eslint-disable-next-line @eslint-react/dom-no-unsafe-target-blank -- our own site; the referrer is wanted */}
-              <a href="https://ip.skk.moe" target="_blank" {...stylex.props(styles.footnoteLink)}>ip.skk.moe</a>
-            </span>
-            <PrivacyToggle
-              showSlot={<><EyeIcon size={14} strokeWidth={1.8} aria-hidden />Show details</>}
-              hideSlot={<><EyeOffIcon size={14} strokeWidth={1.8} aria-hidden />Hide details</>}
-            />
-          </p>
-        </section>
+        <div {...stylex.props(styles.directions)}>
+          <Direction direction="download" label="Download" targets={targets} />
+          <Direction direction="upload" label="Upload" targets={targets} />
+        </div>
+
+        <dl {...stylex.props(styles.stats)}>
+          <Stat label="Download latency" stat="downloadLatency" />
+          <Stat label="Downloaded" stat="downloaded" />
+          <Stat label="Upload latency" stat="uploadLatency" />
+          <Stat label="Uploaded" stat="uploaded" />
+        </dl>
+
+        <dl {...stylex.props(styles.info)}>
+          <Info label="IP address" field="ip" hiddenSlot={hiddenJsx} />
+          <Info label="Location" field="location" />
+          <Info label="Provider" field="isp" hiddenSlot={hiddenJsx} />
+        </dl>
+        <p data-screenshot="hide" {...stylex.props(styles.footnote)}>
+          <span>
+            Learn more about your IP at
+            {' '}
+            {/* eslint-disable-next-line @eslint-react/dom-no-unsafe-target-blank -- our own site; the referrer is wanted */}
+            <a href="https://ip.skk.moe" target="_blank" {...stylex.props(styles.footnoteLink)}>ip.skk.moe</a>
+          </span>
+          <PrivacyToggle showSlot="Show details" hideSlot="Hide details" />
+        </p>
       </SpeedtestRoot>
     </ComposeContextProvider>
   );
 }
 
-function Panel({ direction, label }: { direction: 'download' | 'upload', label: string }) {
+interface DirectionProps {
+  direction: 'download' | 'upload',
+  label: string,
+  targets: readonly Target[]
+}
+
+function Direction({ direction, label, targets }: DirectionProps) {
   return (
-    <div {...stylex.props(styles.panel)}>
-      <h2 {...stylex.props(styles.label)}>
+    <DirectionSection direction={direction} targets={targets}>
+      <h2 {...stylex.props(styles.directionLabel)}>
         <svg
           viewBox="0 0 12 12"
           aria-hidden
@@ -286,7 +243,10 @@ function Panel({ direction, label }: { direction: 'download' | 'upload', label: 
         {label}
       </h2>
       <SpeedReadout direction={direction} />
-    </div>
+      <div {...stylex.props(styles.chart)}>
+        <SpeedTrend direction={direction} />
+      </div>
+    </DirectionSection>
   );
 }
 
@@ -297,8 +257,8 @@ interface StatProps {
 
 function Stat({ label, stat }: StatProps) {
   return (
-    <div {...stylex.props(styles.stat, styles.statFill)}>
-      <dt {...stylex.props(styles.label)}>{label}</dt>
+    <div>
+      <dt {...stylex.props(styles.capsLabel)}>{label}</dt>
       <StatValue stat={stat} />
     </div>
   );
@@ -306,7 +266,7 @@ function Stat({ label, stat }: StatProps) {
 
 function Info({ label, ...value }: { label: string } & React.ComponentProps<typeof GeoValue>) {
   return (
-    <div {...stylex.props(styles.infoItem)}>
+    <div>
       <dt {...stylex.props(styles.infoLabel)}>{label}</dt>
       <GeoValue {...value} />
     </div>

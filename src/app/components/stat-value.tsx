@@ -11,21 +11,20 @@ import { colors, fonts } from '../../styles/tokens.stylex';
 const styles = stylex.create({
   statValue: {
     display: 'block',
-    marginTop: 4,
     fontFamily: fonts.condensed,
-    fontSize: { default: 26, [bp.mobile]: 24, [bp.large]: 28 },
-    fontWeight: 500,
-    lineHeight: 1,
-    letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
+    fontSize: { default: 22, [bp.large]: 24 },
+    fontWeight: 300,
+    lineHeight: 1.1,
+    letterSpacing: '0',
+    fontVariantNumeric: 'lining-nums tabular-nums',
     color: colors.ink
   },
   statUnit: {
-    marginLeft: 6,
+    marginLeft: 4,
     fontFamily: fonts.sans,
-    fontSize: { default: 14, [bp.large]: 16 },
+    fontSize: { default: 11, [bp.large]: 12 },
     fontWeight: 400,
-    letterSpacing: 0,
+    letterSpacing: '0.02em',
     color: colors.inkMuted
   },
   empty: { color: colors.inkFaint }

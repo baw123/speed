@@ -11,48 +11,43 @@ import { TrendChart } from './trend-chart';
 import { TREND_SAMPLES } from '@/hooks/use-speedtest';
 
 const styles = stylex.create({
-  panelValue: {
+  value: {
     fontFamily: fonts.condensed,
-    fontSize: {
-      default: 'clamp(44px, 12vw, 64px)',
-      [bp.mobile]: 'clamp(40px, 11vw, 48px)',
-      [bp.large]: 'clamp(60px, 6vw, 88px)'
-    },
-    fontWeight: 500,
+    fontSize: { default: 64, [bp.mobile]: 52, [bp.large]: 88 },
+    fontWeight: 300,
     lineHeight: 1,
     letterSpacing: '-0.01em',
-    fontVariantNumeric: 'tabular-nums',
+    // Cormorant defaults to old-style figures; lining figures keep a readout level.
+    fontVariantNumeric: 'lining-nums tabular-nums',
     color: colors.ink
   },
-  panelUnit: {
-    marginLeft: 8,
+  unit: {
+    marginLeft: 10,
     fontFamily: fonts.sans,
-    fontSize: { default: 16, [bp.large]: 20 },
+    fontSize: { default: 16, [bp.large]: 22 },
     fontWeight: 400,
-    letterSpacing: 0,
+    letterSpacing: '0.02em',
     color: colors.inkMuted
-  },
-  panelChart: {
-    height: { default: 112, [bp.mobile]: 80, [bp.large]: 'clamp(140px, 13vw, 200px)' },
-    marginTop: { default: 6, [bp.mobile]: 4 },
-    marginInline: { default: -20, [bp.mobile]: -16, [bp.large]: -28 }
   },
   empty: { color: colors.inkFaint }
 });
 
-/** Headline speed and trend of one direction: live while its phase runs, the result afterwards. */
+/** Headline speed of one direction: live while its phase runs, the result afterwards. */
 export function SpeedReadout({ direction }: { direction: 'download' | 'upload' }) {
-  const { speed, sustained, trend } = use(direction === 'download' ? DownloadContext : UploadContext);
+  const { speed } = use(direction === 'download' ? DownloadContext : UploadContext);
   const figure = speed == null ? null : splitUnit(prettyBandwidth(speed * 1e6, { locale: 'en-US', minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   return (
-    <>
-      <p {...stylex.props(styles.panelValue, figure === null && styles.empty)}>
-        {figure?.value ?? '—'}
-        <span {...stylex.props(styles.panelUnit)}>{figure?.unit ?? 'Mbps'}</span>
-      </p>
-      <div {...stylex.props(styles.panelChart)}>
-        <TrendChart samples={trend} capacity={Math.max(trend.length, TREND_SAMPLES)} marker={sustained} markerLabel="Sustained" tone={direction} />
-      </div>
-    </>
+    <p {...stylex.props(styles.value, figure === null && styles.empty)}>
+      {figure?.value ?? '—'}
+      <span {...stylex.props(styles.unit)}>{figure?.unit ?? 'Mbps'}</span>
+    </p>
+  );
+}
+
+/** The full-width trend line under the hero. */
+export function SpeedTrend({ direction }: { direction: 'download' | 'upload' }) {
+  const { sustained, trend } = use(direction === 'download' ? DownloadContext : UploadContext);
+  return (
+    <TrendChart samples={trend} capacity={Math.max(trend.length, TREND_SAMPLES)} marker={sustained} markerLabel="Sustained" tone={direction} />
   );
 }

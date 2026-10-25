@@ -6,26 +6,27 @@ import { useRedacted, useSetRedacted } from '@/context/speedtest';
 import { colors } from '../../styles/tokens.stylex';
 
 const styles = stylex.create({
+  // A text link rather than a button, matching the footnote it sits in.
   privacyToggle: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 6,
-    height: 28,
-    paddingInline: 10,
-    borderRadius: 8,
+    display: 'inline',
+    padding: 0,
     borderStyle: 'none',
-    boxShadow: `inset 0 0 0 1px ${colors.line}`,
-    backgroundColor: { default: 'transparent', ':hover': colors.control },
+    backgroundColor: 'transparent',
     color: { default: colors.inkMuted, ':hover': colors.ink },
     fontFamily: 'inherit',
     fontSize: 'inherit',
-    fontWeight: 500,
+    fontWeight: 400,
+    fontVariantCaps: 'inherit',
+    letterSpacing: 'inherit',
+    textDecorationLine: 'underline',
+    textDecorationColor: { default: colors.line, ':hover': colors.ink },
+    textUnderlineOffset: 3,
     cursor: 'pointer',
     outlineStyle: { default: 'none', ':focus-visible': 'solid' },
     outlineWidth: 2,
     outlineColor: colors.ink,
     outlineOffset: 2,
-    transitionProperty: 'background-color, color',
+    transitionProperty: 'color, text-decoration-color',
     transitionDuration: '150ms'
   }
 });

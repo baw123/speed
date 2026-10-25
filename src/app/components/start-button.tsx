@@ -32,52 +32,48 @@ function transferProgress(samples: number) {
 }
 
 const styles = stylex.create({
+  // A small-caps line with a hairline underline; no box, no fill.
   button: {
     position: 'relative',
-    isolation: 'isolate',
-    overflow: 'hidden',
     display: 'inline-flex',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
     flexShrink: 0,
-    minWidth: { default: 140, [bp.mobile]: 0 },
-    minHeight: 44,
-    paddingInline: { default: 24, [bp.mobile]: 18, [bp.large]: 32 },
-    borderRadius: 12,
+    paddingTop: 0,
+    paddingInline: 0,
+    paddingBottom: 6,
     borderStyle: 'none',
-    backgroundColor: {
-      default: colors.ink,
-      ':hover': `color-mix(in srgb, ${colors.ink} 86%, ${colors.surface})`
-    },
-    color: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomStyle: 'solid',
+    borderBottomColor: { default: colors.line, ':hover': colors.ink },
+    backgroundColor: 'transparent',
+    color: colors.ink,
     fontFamily: 'inherit',
-    fontSize: { default: 15, [bp.large]: 17 },
-    fontWeight: 500,
+    fontSize: { default: 13, [bp.large]: 15 },
+    fontWeight: 400,
+    fontVariantCaps: 'all-small-caps',
+    lineHeight: 1.4,
+    letterSpacing: '0.16em',
     cursor: { default: 'pointer', ':disabled': 'default' },
-    opacity: { default: 1, ':disabled': 0.55 },
+    opacity: { default: 1, ':disabled': 0.5 },
     outlineStyle: { default: 'none', ':focus-visible': 'solid' },
     outlineWidth: 2,
     outlineColor: colors.ink,
-    outlineOffset: 3,
-    transitionProperty: 'background-color, color, box-shadow',
+    outlineOffset: 4,
+    transitionProperty: 'border-color, color',
     transitionDuration: '150ms'
   },
-  buttonQuiet: {
-    backgroundColor: {
-      default: 'transparent',
-      ':hover': colors.control
-    },
-    color: colors.ink,
-    boxShadow: `inset 0 0 0 1px ${colors.line}`
-  },
+  buttonQuiet: { color: colors.inkMuted },
+  // Progress is the underline itself, growing from the left as the run advances.
   progress: {
     position: 'absolute',
-    inset: 0,
-    zIndex: -1,
+    left: 0,
+    right: 0,
+    bottom: -1,
+    height: 1,
     transformOrigin: 'left',
     transform: 'scaleX(0)',
-    backgroundColor: `color-mix(in srgb, ${colors.ink} 10%, transparent)`
+    backgroundColor: colors.ink
   },
   progressTo: (transform: string, duration: string, easing: string) => ({
     transform,

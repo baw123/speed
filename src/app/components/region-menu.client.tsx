@@ -2,6 +2,7 @@
 
 import * as stylex from '@stylexjs/stylex';
 import { Menu } from '@base-ui/react/menu';
+import { ChevronDownIcon } from 'lucide-react';
 import { menuStyles } from '../../styles/menu.stylex';
 import { useRunning, useSetChoice } from '@/context/speedtest';
 import { useTargetIndex } from '@/hooks/use-target';
@@ -12,25 +13,44 @@ import { colors } from '../../styles/tokens.stylex';
 const styles = stylex.create({
   note: {
     marginLeft: 6,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 400,
+    letterSpacing: '0.04em',
     color: colors.inkFaint
   },
-  // Phones only get the icon; the header has no room for the label beside the other controls.
+  // A quiet label at the header's right end rather than a control.
   trigger: {
-    width: { default: 'auto', [bp.mobile]: 36 },
-    paddingInline: { default: 10, [bp.mobile]: 0 }
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    paddingBlock: 4,
+    paddingInline: 0,
+    borderStyle: 'none',
+    backgroundColor: 'transparent',
+    color: { default: colors.inkMuted, ':hover': colors.ink },
+    fontFamily: 'inherit',
+    fontSize: { default: 12, [bp.large]: 13 },
+    fontWeight: 400,
+    fontVariantCaps: 'all-small-caps',
+    letterSpacing: '0.16em',
+    cursor: { default: 'pointer', ':disabled': 'default' },
+    opacity: { default: 1, ':disabled': 0.5 },
+    outlineStyle: { default: 'none', ':focus-visible': 'solid' },
+    outlineWidth: 2,
+    outlineColor: colors.ink,
+    outlineOffset: 2,
+    transitionProperty: 'color',
+    transitionDuration: '150ms'
   },
-  label: { display: { default: 'inline', [bp.mobile]: 'none' } }
+  chevron: { width: 10, height: 10, marginTop: 1 }
 });
 
 interface RegionMenuClientProps {
   targets: readonly Target[],
-  triggerIconSlot: React.ReactNode,
   checkSlot: React.ReactNode
 }
 
-export function RegionMenuClient({ targets, triggerIconSlot, checkSlot }: RegionMenuClientProps) {
+export function RegionMenuClient({ targets, checkSlot }: RegionMenuClientProps) {
   const index = useTargetIndex(targets);
   const value = targets[index];
   const setChoice = useSetChoice();
@@ -42,13 +62,13 @@ export function RegionMenuClient({ targets, triggerIconSlot, checkSlot }: Region
         disabled={running}
         aria-label={`Region: ${value.name}`}
         title="Region"
-        {...stylex.props(menuStyles.trigger, menuStyles.labelled, styles.trigger)}
+        {...stylex.props(styles.trigger)}
       >
-        {triggerIconSlot}
-        <span {...stylex.props(styles.label)}>{value.name}</span>
+        <span>{value.name}</span>
+        <ChevronDownIcon aria-hidden {...stylex.props(styles.chevron)} />
       </Menu.Trigger>
       <Menu.Portal>
-        <Menu.Positioner align="end" sideOffset={8} {...stylex.props(menuStyles.positioner)}>
+        <Menu.Positioner align="end" sideOffset={10} {...stylex.props(menuStyles.positioner)}>
           <Menu.Popup {...stylex.props(menuStyles.popup)}>
             <Menu.RadioGroup value={index} onValueChange={setChoice}>
               {targets.map((target, i) => (

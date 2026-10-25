@@ -19,7 +19,7 @@ function save(image: Promise<Blob>) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `speed.skk.moe-${new Date().toISOString().slice(0, 19).replaceAll(RE_TIMESTAMP_SEPARATORS, '-')}.png`;
+      link.download = `speed.inshadow.uk-${new Date().toISOString().slice(0, 19).replaceAll(RE_TIMESTAMP_SEPARATORS, '-')}.png`;
       link.click();
       URL.revokeObjectURL(url);
       toast.success('Screenshot saved');
@@ -73,7 +73,9 @@ export function ScreenshotButton({ children }: React.PropsWithChildren) {
     <Button
       disabled={phase !== 'done' || capturing}
       onClick={screenshot}
-      {...stylex.props(menuStyles.trigger, menuStyles.labelled)}
+      aria-label="Screenshot"
+      title="Screenshot"
+      {...stylex.props(menuStyles.trigger)}
     >
       {children}
     </Button>
