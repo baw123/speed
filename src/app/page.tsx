@@ -9,6 +9,8 @@ const PAGE_PADDING = 'clamp(20px, 4vw, 40px)';
 
 const styles = stylex.create({
   main: {
+    position: 'relative',
+    zIndex: 1,
     minHeight: '100dvh',
     display: 'flex',
     flexDirection: 'column',
@@ -19,19 +21,20 @@ const styles = stylex.create({
     paddingBottom: PAGE_PADDING,
     paddingLeft: PAGE_PADDING
   },
-  // Aligns with the info row above it.
+  // Left-aligned under the column above, closed by the same hairline.
   footer: {
     width: '100%',
     maxWidth: 1120,
-    marginTop: { default: 24, [bp.mobile]: 16, [bp.large]: 32 },
-    paddingInline: { default: 16, [bp.mobile]: 12, [bp.large]: 24 },
-    fontSize: { default: 13, [bp.large]: 14 },
-    lineHeight: 1.3,
+    marginTop: { default: 40, [bp.mobile]: 28, [bp.large]: 56 },
+    paddingTop: { default: 16, [bp.large]: 22 },
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
+    borderTopColor: colors.line,
+    fontSize: { default: 12, [bp.large]: 13 },
+    lineHeight: 1.9,
+    fontVariantCaps: 'all-small-caps',
+    letterSpacing: '0.16em',
     color: colors.inkMuted
-  },
-  separator: {
-    marginInline: 8,
-    color: colors.inkFaint
   },
   footerLink: {
     color: colors.ink,
@@ -40,12 +43,6 @@ const styles = stylex.create({
     textUnderlineOffset: 3,
     transitionProperty: 'text-decoration-color',
     transitionDuration: '150ms'
-  },
-  linkIcon: {
-    width: '1em',
-    height: '1em',
-    marginRight: 4,
-    verticalAlign: '-0.125em'
   }
 });
 
@@ -60,19 +57,13 @@ export default function Home() {
         {' '}
         <CurrentYear defaultYear={2026} />
         {' '}
-        speed.skk.moe. All rights reserved
-        <span aria-hidden {...stylex.props(styles.separator)}>|</span>
-        Made by
+        inshadow.uk.
+        <br />
+        Based on
         {' '}
-        {/* eslint-disable-next-line @eslint-react/dom-no-unsafe-target-blank -- our own site; the referrer is wanted */}
-        <a href="https://skk.moe" target="_blank" {...stylex.props(styles.footerLink)}>Sukka</a>
-        <span aria-hidden {...stylex.props(styles.separator)}>|</span>
-        <a href="https://github.com/SukkaW/speed.skk.moe" target="_blank" rel="noreferrer noopener" {...stylex.props(styles.footerLink)}>
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden {...stylex.props(styles.linkIcon)}>
-            <path fillRule="evenodd" clipRule="evenodd" d="M12.03 2a9.97 9.97 0 0 0-3.16 19.44c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.15-1.1-1.46-1.1-1.46-.91-.61.06-.6.06-.6 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.33 1.08 2.9.83.1-.65.35-1.09.64-1.34-2.22-.25-4.55-1.1-4.55-4.93 0-1.08.4-1.98 1.03-2.67-.1-.26-.45-1.27.1-2.64 0 0 .83-.27 2.74 1.02a9.58 9.58 0 0 1 2.5-.34 9.55 9.55 0 0 1 2.5.34c1.9-1.3 2.73-1.02 2.73-1.02.55 1.37.2 2.38.1 2.64.64.7 1.03 1.58 1.03 2.67 0 3.84-2.33 4.68-4.56 4.92.36.31.68.92.68 1.85l-.01 2.74c0 .26.18.57.68.48A9.98 9.98 0 0 0 12.03 2z" />
-          </svg>
-          Source Code
-        </a>
+        <a href="https://github.com/SukkaW/speed.skk.moe" target="_blank" rel="noreferrer noopener" {...stylex.props(styles.footerLink)}>speed.skk.moe</a>
+        {' '}
+        by Sukka
       </footer>
     </main>
   );
