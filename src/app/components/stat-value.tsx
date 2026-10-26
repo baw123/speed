@@ -23,7 +23,7 @@ const styles = stylex.create({
     marginLeft: 4,
     fontFamily: fonts.sans,
     fontSize: { default: 11, [bp.large]: 12 },
-    fontWeight: 400,
+    fontWeight: 300,
     letterSpacing: '0.02em',
     color: colors.inkMuted
   },
@@ -66,7 +66,7 @@ export function StatValue({ stat }: StatValueProps) {
   const { value, unit } = useStat(stat);
   return (
     <dd {...stylex.props(styles.statValue, value == null && styles.empty)}>
-      {value ?? '—'}
+      {value ?? '0'}
       <span {...stylex.props(styles.statUnit)}>{unit}</span>
     </dd>
   );

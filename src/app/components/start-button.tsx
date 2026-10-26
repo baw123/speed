@@ -50,7 +50,7 @@ const styles = stylex.create({
     color: colors.ink,
     fontFamily: 'inherit',
     fontSize: { default: 13, [bp.large]: 15 },
-    fontWeight: 400,
+    fontWeight: 300,
     fontVariantCaps: 'all-small-caps',
     lineHeight: 1.4,
     letterSpacing: '0.16em',

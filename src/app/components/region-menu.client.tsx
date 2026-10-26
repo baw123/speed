@@ -30,7 +30,7 @@ const styles = stylex.create({
     color: { default: colors.inkMuted, ':hover': colors.ink },
     fontFamily: 'inherit',
     fontSize: { default: 12, [bp.large]: 13 },
-    fontWeight: 400,
+    fontWeight: 300,
     fontVariantCaps: 'all-small-caps',
     letterSpacing: '0.16em',
     cursor: { default: 'pointer', ':disabled': 'default' },

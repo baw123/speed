@@ -18,7 +18,7 @@ const styles = stylex.create({
     display: 'block',
     marginTop: { default: 6, [bp.large]: 8 },
     fontSize: { default: 16, [bp.large]: 19 },
-    fontWeight: 400,
+    fontWeight: 300,
     lineHeight: 1.3,
     color: colors.ink,
     fontVariantNumeric: 'lining-nums tabular-nums',

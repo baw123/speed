@@ -15,7 +15,7 @@ const styles = stylex.create({
     color: { default: colors.inkMuted, ':hover': colors.ink },
     fontFamily: 'inherit',
     fontSize: 'inherit',
-    fontWeight: 400,
+    fontWeight: 300,
     fontVariantCaps: 'inherit',
     letterSpacing: 'inherit',
     textDecorationLine: 'underline',

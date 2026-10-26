@@ -22,7 +22,7 @@ const styles = stylex.create({
     color: { default: colors.inkFaint, ':hover': colors.inkMuted },
     fontFamily: fonts.condensed,
     fontSize: { default: 18, [bp.large]: 20 },
-    fontWeight: 400,
+    fontWeight: 300,
     lineHeight: 1.2,
     cursor: { default: 'pointer', ':disabled': 'default' },
     outlineStyle: { default: 'none', ':focus-visible': 'solid' },

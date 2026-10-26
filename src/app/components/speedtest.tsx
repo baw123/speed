@@ -5,52 +5,49 @@ import { Connections } from './connections';
 import { DirectionSection } from './direction-section';
 import { GeoValue } from './geo-value';
 import { PrivacyToggle } from './privacy-toggle';
-import { RegionMenu } from './region-menu';
+import { ScreenshotButton } from './screenshot-button';
 import { SpeedReadout, SpeedTrend } from './speed-readout';
 import { CapturingProvider, ChoiceProvider, DownloadProvider, JitterProvider, LatencyProvider, ModeProvider, PhaseProvider, RedactedProvider, RootProvider, UploadProvider } from '@/context/speedtest';
 import { SpeedtestRoot } from './speedtest-root';
 import { StartButton } from './start-button';
 import { StatValue } from './stat-value';
 import type { StatKey } from './stat-value';
+import { Wordmark } from './wordmark';
 import { bp } from '../../styles/breakpoints.stylex';
-import { colors, fonts } from '../../styles/tokens.stylex';
+import { colors } from '../../styles/tokens.stylex';
 import type { Target } from '@/lib/targets';
 
 const styles = stylex.create({
   // Frameless: nothing is boxed; rows are divided by space and a single hairline above the info.
   header: {
     display: 'flex',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
     marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 64 }
   },
-  wordmark: {
-    fontFamily: fonts.condensed,
-    fontSize: { default: 28, [bp.large]: 30 },
-    fontWeight: 300,
-    lineHeight: 1.1,
-    letterSpacing: '0.01em',
-    whiteSpace: 'nowrap'
-  },
-  wordmarkDomain: { color: colors.inkFaint },
   // Start, the connection toggle and the two latency readings share one baseline.
   controls: {
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'flex-end',
-    columnGap: { default: 40, [bp.large]: 72 },
-    rowGap: { default: 20, [bp.mobile]: 16 },
+    columnGap: { default: 24, [bp.large]: 72 },
+    rowGap: { default: 20, [bp.mobile]: 18 },
     marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 72 }
   },
   capsLabel: {
     marginBottom: { default: 8, [bp.large]: 10 },
-    fontSize: { default: 10, [bp.large]: 11 },
-    fontWeight: 400,
+    fontSize: { default: 11, [bp.large]: 12 },
+    fontWeight: 300,
     fontVariantCaps: 'all-small-caps',
     letterSpacing: '0.16em',
     lineHeight: 1.3,
-    color: colors.inkFaint
+    color: colors.inkMuted
+  },
+  // Latency and jitter stay together, so a narrow screen breaks before them, not between them.
+  statPair: {
+    display: 'flex',
+    columnGap: { default: 24, [bp.large]: 64 }
   },
   directions: {
     display: 'grid',
@@ -67,12 +64,12 @@ const styles = stylex.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: { default: 12, [bp.large]: 14 },
-    fontSize: { default: 11, [bp.large]: 12 },
-    fontWeight: 400,
+    fontSize: { default: 12, [bp.large]: 13 },
+    fontWeight: 300,
     fontVariantCaps: 'all-small-caps',
     letterSpacing: '0.16em',
     lineHeight: 1.25,
-    color: colors.inkFaint
+    color: colors.inkMuted
   },
   arrow: {
     width: 11,
@@ -104,12 +101,12 @@ const styles = stylex.create({
     borderTopColor: colors.line
   },
   infoLabel: {
-    fontSize: { default: 10, [bp.large]: 11 },
-    fontWeight: 400,
+    fontSize: { default: 11, [bp.large]: 12 },
+    fontWeight: 300,
     fontVariantCaps: 'all-small-caps',
     letterSpacing: '0.16em',
     lineHeight: 1.3,
-    color: colors.inkFaint
+    color: colors.inkMuted
   },
   footnote: {
     display: 'flex',
@@ -117,12 +114,12 @@ const styles = stylex.create({
     alignItems: 'baseline',
     gap: 8,
     marginTop: { default: 16, [bp.large]: 20 },
-    fontSize: { default: 11, [bp.large]: 12 },
-    fontWeight: 400,
+    fontSize: { default: 12, [bp.large]: 13 },
+    fontWeight: 300,
     fontVariantCaps: 'all-small-caps',
     letterSpacing: '0.16em',
     lineHeight: 1.3,
-    color: colors.inkFaint
+    color: colors.inkMuted
   },
   footnoteLink: {
     color: colors.inkMuted,
@@ -167,10 +164,10 @@ export function Speedtest({ targets }: SpeedtestProps) {
     <ComposeContextProvider contexts={contexts}>
       <SpeedtestRoot>
         <header {...stylex.props(styles.header)}>
-          <h1 {...stylex.props(styles.wordmark)}>
-            speed<span {...stylex.props(styles.wordmarkDomain)}>.inshadow.uk</span>
+          <h1>
+            <Wordmark />
           </h1>
-          <RegionMenu targets={targets} />
+          <ScreenshotButton>Screenshot</ScreenshotButton>
         </header>
 
         <div {...stylex.props(styles.controls)}>
@@ -184,12 +181,14 @@ export function Speedtest({ targets }: SpeedtestProps) {
             <div {...stylex.props(styles.capsLabel)}>Connections</div>
             <Connections />
           </div>
-          <dl>
-            <Stat label="Latency" stat="latency" />
-          </dl>
-          <dl>
-            <Stat label="Jitter" stat="jitter" />
-          </dl>
+          <div {...stylex.props(styles.statPair)}>
+            <dl>
+              <Stat label="Latency" stat="latency" />
+            </dl>
+            <dl>
+              <Stat label="Jitter" stat="jitter" />
+            </dl>
+          </div>
         </div>
 
         <div {...stylex.props(styles.directions)}>

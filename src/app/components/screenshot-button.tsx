@@ -5,8 +5,36 @@ import { flushSync } from 'react-dom';
 import { Button } from '@base-ui/react/button';
 import { noop } from 'foxts/noop';
 import { toast } from 'sonner';
-import { menuStyles } from '../../styles/menu.stylex';
 import { useCapturing, usePhase, useRedacted, useRoot, useSetCapturing, useSetRedacted } from '@/context/speedtest';
+import { bp } from '../../styles/breakpoints.stylex';
+import { colors } from '../../styles/tokens.stylex';
+
+const styles = stylex.create({
+  // A quiet caps label at the header's right end, same voice as the rest of the page.
+  trigger: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+    paddingBlock: 4,
+    paddingInline: 0,
+    borderStyle: 'none',
+    backgroundColor: 'transparent',
+    color: { default: colors.inkMuted, ':hover': colors.ink },
+    fontFamily: 'inherit',
+    fontSize: { default: 12, [bp.large]: 13 },
+    fontWeight: 300,
+    fontVariantCaps: 'all-small-caps',
+    letterSpacing: '0.16em',
+    cursor: { default: 'pointer', ':disabled': 'default' },
+    opacity: { default: 1, ':disabled': 0.4 },
+    outlineStyle: { default: 'none', ':focus-visible': 'solid' },
+    outlineWidth: 2,
+    outlineColor: colors.ink,
+    outlineOffset: 2,
+    transitionProperty: 'color',
+    transitionDuration: '150ms'
+  }
+});
 
 const RE_TIMESTAMP_SEPARATORS = /[:T]/g;
 /** CSS px of page background kept around the captured block. */
@@ -75,7 +103,8 @@ export function ScreenshotButton({ children }: React.PropsWithChildren) {
       onClick={screenshot}
       aria-label="Screenshot"
       title="Screenshot"
-      {...stylex.props(menuStyles.trigger)}
+      data-screenshot="hide"
+      {...stylex.props(styles.trigger)}
     >
       {children}
     </Button>
