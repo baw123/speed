@@ -57,7 +57,7 @@ export default function Home() {
         {' '}
         <CurrentYear defaultYear={2026} />
         {' '}
-        inshadow.uk.
+        <a href="https://inshadow.uk" target="_blank" rel="noreferrer noopener" {...stylex.props(styles.footerLink)}>inshadow.uk</a>.
         <br />
         Based on
         {' '}
