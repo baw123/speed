@@ -14,14 +14,16 @@ const styles = stylex.create({
   connectionsDisabled: { opacity: 0.55 },
   // Serif toggle: the active mode is lit, the other recedes to faint.
   option: {
-    padding: '6px 0',
+    padding: 0,
     borderStyle: 'none',
     backgroundColor: 'transparent',
     color: { default: colors.inkFaint, ':hover': colors.inkMuted },
     fontFamily: fonts.condensed,
-    fontSize: { default: 28, '@media (max-width: 760px)': 26 },
+    fontSize: { default: 24, '@media (max-width: 760px)': 22 },
     fontWeight: 300,
-    lineHeight: 1.2,
+    // Match the 33px (mobile 28.6px) line box of the 30px/1.1 stat values so the
+    // labels above and the baselines below both line up across the row.
+    lineHeight: { default: 1.375, '@media (max-width: 760px)': 1.3 },
     cursor: { default: 'pointer', ':disabled': 'default' },
     outlineStyle: { default: 'none', ':focus-visible': 'solid' },
     outlineWidth: 1,
@@ -34,9 +36,9 @@ const styles = stylex.create({
   separator: {
     display: 'inline-block',
     width: 1,
-    height: 16,
+    height: 13,
     backgroundColor: colors.mid,
-    margin: '0 14px'
+    margin: '0 12px'
   }
 });
 
