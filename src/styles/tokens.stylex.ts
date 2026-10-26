@@ -1,21 +1,26 @@
 import * as stylex from '@stylexjs/stylex';
 
-// Dark only, following inshadow.uk: a near-black base, and ink that recedes by opacity rather
-// than by separate hues. The page no longer ships a light scheme.
+// Dark only, matching the speed-inshadow reference: a near-black base, ink that recedes through
+// discrete steps rather than opacity, and a gold reserved for the upload direction.
 export const colors = stylex.defineVars({
-  surface: '#06080B',
-  raised: 'rgba(214, 220, 227, 0.03)',
-  ink: '#D6DCE3',
-  inkMuted: 'rgba(214, 220, 227, 0.62)',
-  inkFaint: 'rgba(214, 220, 227, 0.34)',
-  line: 'rgba(214, 220, 227, 0.12)',
+  surface: '#080a0d',
+  raised: '#10141a',
+  // Lit is the brightest ink, used for headline figures and the active toggle.
+  lit: '#eef1f6',
+  ink: '#c9ced6',
+  inkMuted: '#6b7380',
+  inkFaint: '#3a424d',
+  line: '#171c23',
+  // Hairlines between toggles and the screenshot underline sit one step above the base line.
+  mid: '#2a323d',
   control: 'rgba(214, 220, 227, 0.06)',
-  download: '#BFD3E8',
-  upload: '#C9B49C'
+  gold: '#d8c7a1',
+  download: '#c3cfdf',
+  upload: '#dccba5'
 });
 
 export const fonts = stylex.defineVars({
-  // Cormorant Light is the only face on the page, exactly as on the inshadow.uk homepage.
+  // The page is set entirely in Cormorant Garamond Light, including the italic tagline.
   sans: 'var(--font-serif), "Cormorant Garamond", Garamond, "Iowan Old Style", Georgia, serif',
   condensed: 'var(--font-serif), "Cormorant Garamond", Garamond, "Iowan Old Style", Georgia, serif'
 });

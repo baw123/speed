@@ -2,35 +2,16 @@
   color-scheme: dark;
 }
 
-/* The homepage's text rendering: thin strokes stay even at light weights. */
+/* Thin strokes stay even at light weights, matching the reference page. */
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 ::selection {
-  background: rgba(190, 205, 225, 0.22);
+  background: rgba(160, 175, 200, 0.28);
   color: #fff;
-}
-
-/* The two fixed layers that give the page its quiet, lit-from-within depth. */
-body::before,
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-}
-
-body::before {
-  z-index: 0;
-  background: radial-gradient(ellipse 130% 105% at 34% 38%, transparent 28%, rgba(0, 0, 0, 0.82));
-}
-
-body::after {
-  z-index: 2;
-  opacity: 0.04;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
 }
