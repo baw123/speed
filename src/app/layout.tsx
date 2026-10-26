@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { WebApplication, WithContext } from 'schema-dts';
-import { Cormorant_Garamond } from 'next/font/google';
+import { Cormorant } from 'next/font/google';
 import * as stylex from '@stylexjs/stylex';
 import { stylexPropsWithClassName } from 'stylex-webpack/utils';
 import 'minireset.css';
@@ -9,7 +9,9 @@ import 'stylex-webpack/stylex.css';
 import { colors, fonts } from '../styles/tokens.stylex';
 import { Toasts } from '@/components/toasts';
 
-const serif = Cormorant_Garamond({
+// The inshadow.uk homepage sets everything in Cormorant Light; the family (not just Garamond) keeps
+// the letterforms and metrics identical to it.
+const serif = Cormorant({
   subsets: ['latin'],
   weight: ['300', '400', '500'],
   style: ['normal', 'italic'],
