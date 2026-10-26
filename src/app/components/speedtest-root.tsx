@@ -4,10 +4,12 @@ import * as stylex from '@stylexjs/stylex';
 import { useSetRoot } from '@/context/speedtest';
 
 const styles = stylex.create({
-  // A plain left-aligned column; the frameless layout divides rows with space, not boxes.
+  // The captured block; mirrors the reference wrap: 1400px wide, left-aligned column.
   root: {
+    position: 'relative',
+    zIndex: 1,
     width: '100%',
-    maxWidth: 1120
+    maxWidth: 1400
   }
 });
 

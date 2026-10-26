@@ -4,7 +4,6 @@ import * as stylex from '@stylexjs/stylex';
 import { Fragment } from 'react';
 import { stringJoin } from 'foxts/string-join';
 import { useRedacted } from '@/context/speedtest';
-import { bp } from '../../styles/breakpoints.stylex';
 import { colors } from '../../styles/tokens.stylex';
 import { useGeo } from '@/hooks/use-geo';
 import type { Geo } from '@/hooks/use-geo';
@@ -16,11 +15,11 @@ const pulse = stylex.keyframes({
 const styles = stylex.create({
   infoValue: {
     display: 'block',
-    marginTop: { default: 6, [bp.large]: 8 },
-    fontSize: { default: 16, [bp.large]: 19 },
+    marginTop: 0,
+    fontSize: { default: 26, '@media (max-width: 760px)': 22 },
     fontWeight: 300,
     lineHeight: 1.3,
-    color: colors.ink,
+    color: colors.lit,
     fontVariantNumeric: 'lining-nums tabular-nums',
     overflowWrap: 'anywhere'
   },

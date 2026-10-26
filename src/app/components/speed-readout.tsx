@@ -3,9 +3,8 @@
 import * as stylex from '@stylexjs/stylex';
 import { use } from 'react';
 import { prettyBandwidth } from 'xbits';
-import { DownloadContext, UploadContext } from '@/context/speedtest';
+import { DownloadContext, UploadContext, usePhase } from '@/context/speedtest';
 import { splitUnit } from '@/lib/split-unit';
-import { bp } from '../../styles/breakpoints.stylex';
 import { colors, fonts } from '../../styles/tokens.stylex';
 import { TrendChart } from './trend-chart';
 import { TREND_SAMPLES } from '@/hooks/use-speedtest';
@@ -13,31 +12,33 @@ import { TREND_SAMPLES } from '@/hooks/use-speedtest';
 const styles = stylex.create({
   value: {
     fontFamily: fonts.condensed,
-    fontSize: { default: 64, [bp.mobile]: 52, [bp.large]: 88 },
+    fontSize: 'clamp(72px, 9vw, 128px)',
     fontWeight: 300,
     lineHeight: 1,
-    letterSpacing: '-0.01em',
-    // Cormorant defaults to old-style figures; lining figures keep a readout level.
+    letterSpacing: '0',
+    paddingBottom: 28,
     fontVariantNumeric: 'lining-nums tabular-nums',
-    color: colors.ink
+    color: colors.lit
   },
   unit: {
-    marginLeft: 10,
+    marginLeft: 14,
     fontFamily: fonts.sans,
-    fontSize: { default: 16, [bp.large]: 22 },
+    fontSize: 'clamp(20px, 2vw, 28px)',
     fontWeight: 300,
     letterSpacing: '0.02em',
     color: colors.inkMuted
   },
-  empty: { color: colors.inkFaint }
+  idle: { color: colors.inkFaint }
 });
 
 /** Headline speed of one direction: live while its phase runs, the result afterwards. */
 export function SpeedReadout({ direction }: { direction: 'download' | 'upload' }) {
+  const phase = usePhase();
   const { speed } = use(direction === 'download' ? DownloadContext : UploadContext);
   const figure = speed == null ? null : splitUnit(prettyBandwidth(speed * 1e6, { locale: 'en-US', minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const idle = phase === 'idle';
   return (
-    <p {...stylex.props(styles.value, figure === null && styles.empty)}>
+    <p {...stylex.props(styles.value, idle && styles.idle)}>
       {figure?.value ?? '0'}
       <span {...stylex.props(styles.unit)}>{figure?.unit ?? 'Mbps'}</span>
     </p>

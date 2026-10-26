@@ -2,42 +2,41 @@
 
 import * as stylex from '@stylexjs/stylex';
 import { useMode, useRunning, useSetMode } from '@/context/speedtest';
-import { bp } from '../../styles/breakpoints.stylex';
 import { colors, fonts } from '../../styles/tokens.stylex';
 
 const styles = stylex.create({
   connections: {
     display: 'flex',
     alignItems: 'baseline',
-    gap: { default: 12, [bp.large]: 14 },
     transitionProperty: 'opacity',
     transitionDuration: '150ms'
   },
   connectionsDisabled: { opacity: 0.55 },
-  // Serif text toggle: the active mode is ink, the other recedes to faint; no underline.
+  // Serif toggle: the active mode is lit, the other recedes to faint.
   option: {
-    padding: 0,
+    padding: '6px 0',
     borderStyle: 'none',
     backgroundColor: 'transparent',
     color: { default: colors.inkFaint, ':hover': colors.inkMuted },
     fontFamily: fonts.condensed,
-    fontSize: { default: 18, [bp.large]: 20 },
+    fontSize: { default: 28, '@media (max-width: 760px)': 26 },
     fontWeight: 300,
     lineHeight: 1.2,
     cursor: { default: 'pointer', ':disabled': 'default' },
     outlineStyle: { default: 'none', ':focus-visible': 'solid' },
-    outlineWidth: 2,
-    outlineColor: colors.ink,
+    outlineWidth: 1,
+    outlineColor: colors.gold,
     outlineOffset: 3,
     transitionProperty: 'color',
-    transitionDuration: '150ms'
+    transitionDuration: '300ms'
   },
-  optionActive: { color: colors.ink },
+  optionActive: { color: colors.lit },
   separator: {
-    alignSelf: 'center',
+    display: 'inline-block',
     width: 1,
-    height: 14,
-    backgroundColor: colors.line
+    height: 16,
+    backgroundColor: colors.mid,
+    margin: '0 14px'
   }
 });
 
@@ -61,7 +60,7 @@ export function Connections() {
       >
         Multi
       </button>
-      <span aria-hidden {...stylex.props(styles.separator)}>·</span>
+      <span aria-hidden {...stylex.props(styles.separator)} />
       <button
         type="button"
         aria-pressed={mode === 'single'}

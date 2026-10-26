@@ -1,143 +1,117 @@
+'use client';
+
 import * as stylex from '@stylexjs/stylex';
+import { useEffect, useRef } from 'react';
 import { ComposeContextProvider } from 'foxact/compose-context-provider';
-import { PlayIcon, RotateCwIcon, SquareIcon } from 'lucide-react';
 import { Connections } from './connections';
 import { DirectionSection } from './direction-section';
 import { GeoValue } from './geo-value';
-import { PrivacyToggle } from './privacy-toggle';
 import { ScreenshotButton } from './screenshot-button';
 import { SpeedReadout, SpeedTrend } from './speed-readout';
-import { CapturingProvider, ChoiceProvider, DownloadProvider, JitterProvider, LatencyProvider, ModeProvider, PhaseProvider, RedactedProvider, RootProvider, UploadProvider } from '@/context/speedtest';
+import { CapturingProvider, ChoiceProvider, DownloadProvider, JitterProvider, LatencyProvider, ModeProvider, PhaseProvider, RedactedProvider, RootProvider, UploadProvider, usePhase } from '@/context/speedtest';
 import { SpeedtestRoot } from './speedtest-root';
 import { StartButton } from './start-button';
 import { StatValue } from './stat-value';
 import type { StatKey } from './stat-value';
 import { Wordmark } from './wordmark';
-import { bp } from '../../styles/breakpoints.stylex';
 import { colors } from '../../styles/tokens.stylex';
 import type { Target } from '@/lib/targets';
 
 const styles = stylex.create({
-  // Frameless: nothing is boxed; rows are divided by space and a single hairline above the info.
+  glow: {
+    position: 'fixed',
+    inset: 0,
+    pointerEvents: 'none',
+    zIndex: 0,
+    background: 'radial-gradient(ellipse 60% 55% at var(--gx, 14%) var(--gy, 22%), rgba(120,135,155,calc(0.16 + var(--k, 0) * 0.14)), transparent 70%)'
+  },
   header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
-    marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 64 }
+    position: 'relative',
+    paddingTop: 'clamp(112px, 18vh, 176px)',
+    paddingBottom: 'clamp(28px, 6vh, 64px)'
   },
-  // Start, the connection toggle and the two latency readings share one baseline.
-  controls: {
+  hint: {
+    marginTop: 'clamp(8px, 1.6vw, 20px)',
+    fontStyle: 'italic',
+    fontWeight: 300,
+    fontSize: 'clamp(15px, 1.5vw, 19px)',
+    color: colors.inkMuted,
+    minHeight: '1.4em',
+    transitionProperty: 'opacity',
+    transitionDuration: '400ms'
+  },
+  row: {
     display: 'flex',
     flexWrap: 'wrap',
+    columnGap: { default: 64, '@media (max-width: 760px)': 40 },
+    rowGap: { default: 28, '@media (max-width: 760px)': 24 },
     alignItems: 'flex-end',
-    columnGap: { default: 24, [bp.large]: 72 },
-    rowGap: { default: 20, [bp.mobile]: 18 },
-    marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 72 }
+    paddingTop: 28,
+    paddingBottom: 8
   },
-  capsLabel: {
-    marginBottom: { default: 8, [bp.large]: 10 },
-    fontSize: { default: 11, [bp.large]: 12 },
-    fontWeight: 300,
-    fontVariantCaps: 'all-small-caps',
-    letterSpacing: '0.16em',
-    lineHeight: 1.3,
-    color: colors.inkMuted
+  lab: {
+    fontSize: 11,
+    letterSpacing: '0.2em',
+    textTransform: 'uppercase',
+    color: colors.inkMuted,
+    marginBottom: 8
   },
-  // Latency and jitter stay together, so a narrow screen breaks before them, not between them.
-  statPair: {
-    display: 'flex',
-    columnGap: { default: 24, [bp.large]: 64 }
-  },
-  directions: {
+  res: {
     display: 'grid',
-    gridTemplateColumns: {
-      default: 'repeat(2, minmax(0, 1fr))',
-      [bp.mobile]: 'minmax(0, 1fr)'
-    },
-    columnGap: { default: 48, [bp.large]: 96 },
-    rowGap: { default: 40, [bp.mobile]: 32 },
-    marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 72 }
+    gridTemplateColumns: { default: '1fr 1fr', '@media (max-width: 760px)': '1fr' },
+    columnGap: 120,
+    rowGap: { default: 0, '@media (max-width: 760px)': 44 },
+    paddingTop: { default: 56, '@media (max-width: 760px)': 40 }
   },
-  directionLabel: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: { default: 12, [bp.large]: 14 },
-    fontSize: { default: 12, [bp.large]: 13 },
-    fontWeight: 300,
-    fontVariantCaps: 'all-small-caps',
-    letterSpacing: '0.16em',
-    lineHeight: 1.25,
-    color: colors.inkMuted
+  downloadLab: {
+    '::before': { content: '"↓ "' }
   },
-  arrow: {
-    width: 11,
-    height: 11,
-    flexShrink: 0
+  uploadLab: {
+    '::before': { content: '"↑ "', color: colors.gold }
   },
-  arrowDown: { color: colors.download },
-  arrowUp: { color: colors.upload, transform: 'rotate(180deg)' },
-  chart: {
-    width: '100%',
-    height: { default: 56, [bp.mobile]: 48 },
-    marginTop: { default: 18, [bp.large]: 22 }
-  },
-  stats: {
+  sub: {
     display: 'flex',
     flexWrap: 'wrap',
-    columnGap: { default: 40, [bp.large]: 64 },
-    rowGap: { default: 20, [bp.mobile]: 16 },
-    marginBottom: { default: 40, [bp.mobile]: 32, [bp.large]: 72 }
+    columnGap: { default: 56, '@media (max-width: 760px)': 24 },
+    rowGap: { default: 24, '@media (max-width: 760px)': 28 },
+    paddingTop: { default: 48, '@media (max-width: 760px)': 36 },
+    paddingBottom: { default: 40, '@media (max-width: 760px)': 32 }
   },
   info: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    columnGap: { default: 40, [bp.large]: 80 },
-    rowGap: { default: 16, [bp.mobile]: 14 },
-    paddingTop: { default: 20, [bp.large]: 28 },
     borderTopWidth: 1,
     borderTopStyle: 'solid',
-    borderTopColor: colors.line
-  },
-  infoLabel: {
-    fontSize: { default: 11, [bp.large]: 12 },
-    fontWeight: 300,
-    fontVariantCaps: 'all-small-caps',
-    letterSpacing: '0.16em',
-    lineHeight: 1.3,
-    color: colors.inkMuted
-  },
-  footnote: {
+    borderTopColor: colors.line,
+    paddingTop: 36,
     display: 'flex',
     flexWrap: 'wrap',
-    alignItems: 'baseline',
-    gap: 8,
-    marginTop: { default: 16, [bp.large]: 20 },
-    fontSize: { default: 12, [bp.large]: 13 },
-    fontWeight: 300,
-    fontVariantCaps: 'all-small-caps',
-    letterSpacing: '0.16em',
-    lineHeight: 1.3,
-    color: colors.inkMuted
+    columnGap: { default: 64, '@media (max-width: 760px)': 40 },
+    rowGap: 28,
+    alignItems: 'flex-end'
   },
-  footnoteLink: {
+  footer: {
+    marginTop: { default: 64, '@media (max-width: 760px)': 48 },
+    borderTopWidth: 1,
+    borderTopStyle: 'solid',
+    borderTopColor: colors.line,
+    paddingTop: 24,
+    paddingBottom: 48,
+    fontSize: 11,
+    letterSpacing: '0.2em',
+    textTransform: 'uppercase',
+    color: colors.inkFaint,
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8
+  },
+  footerLink: {
     color: colors.inkMuted,
-    textDecorationLine: 'underline',
-    textDecorationColor: { default: colors.line, ':hover': colors.ink },
-    textUnderlineOffset: 3,
-    transitionProperty: 'text-decoration-color',
-    transitionDuration: '150ms'
-  },
-  hidden: {
-    fontVariantCaps: 'all-small-caps',
-    letterSpacing: '0.12em',
-    color: colors.inkFaint
+    textDecorationLine: 'none',
+    borderBottomWidth: 1,
+    borderBottomStyle: 'solid',
+    borderBottomColor: colors.mid
   }
 });
-
-/** Stands in for a masked value so a screenshot reads as deliberate redaction. */
-const hiddenJsx = <span {...stylex.props(styles.hidden)}>Hidden</span>;
 
 /** One `createContextState` per concern, so a leaf re-renders only for the state it reads. */
 const contexts = [
@@ -154,8 +128,43 @@ const contexts = [
 ];
 
 interface SpeedtestProps {
-  /** Regions to test against, in menu order; parsed from the environment on the server. */
   targets: readonly Target[]
+}
+
+/** A single soft glow follows the dot of the "i"; its intensity rises while a run is active. */
+function Glow() {
+  const ref = useRef<HTMLDivElement>(null);
+  const phase = usePhase();
+  const running = phase === 'latency' || phase === 'download' || phase === 'upload';
+
+  useEffect(() => {
+    const update = () => {
+      const node = ref.current;
+      if (node === null) return;
+      const btn = document.querySelector<HTMLElement>('[aria-label="Start speed test"], [aria-label="Stop speed test"], [aria-label="Test again"]');
+      if (btn === null) return;
+      const r = btn.getBoundingClientRect();
+      node.style.setProperty('--gx', `${((r.left + r.width / 2) / window.innerWidth) * 100}%`);
+      node.style.setProperty('--gy', `${((r.top + r.height / 2) / window.innerHeight) * 100}%`);
+    };
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      style={{ '--k': running ? 1 : 0 } as React.CSSProperties}
+      {...stylex.props(styles.glow)}
+    />
+  );
 }
 
 /** The static layout; every live value is a small client leaf reading the provider. */
@@ -163,102 +172,87 @@ export function Speedtest({ targets }: SpeedtestProps) {
   return (
     <ComposeContextProvider contexts={contexts}>
       <SpeedtestRoot>
+        <Glow />
         <header {...stylex.props(styles.header)}>
-          <h1>
-            <Wordmark />
-          </h1>
+          <Wordmark button={<StartButton targets={targets} />} />
+          <p {...stylex.props(styles.hint)}>Speed, in the quiet.</p>
           <ScreenshotButton>Screenshot</ScreenshotButton>
         </header>
 
-        <div {...stylex.props(styles.controls)}>
-          <StartButton
-            targets={targets}
-            idleSlot={<><PlayIcon size={11} strokeWidth={2} fill="currentColor" aria-hidden />Start test</>}
-            runningSlot={<><SquareIcon size={10} strokeWidth={2} fill="currentColor" aria-hidden />Stop</>}
-            doneSlot={<><RotateCwIcon size={12} strokeWidth={2} aria-hidden />Test again</>}
-          />
+        <div {...stylex.props(styles.row)}>
           <div>
-            <div {...stylex.props(styles.capsLabel)}>Connections</div>
+            <div {...stylex.props(styles.lab)}>Connections</div>
             <Connections />
           </div>
-          <div {...stylex.props(styles.statPair)}>
-            <dl>
-              <Stat label="Latency" stat="latency" />
-            </dl>
-            <dl>
-              <Stat label="Jitter" stat="jitter" />
-            </dl>
-          </div>
+          <Stat label="Latency" stat="latency" />
+          <Stat label="Jitter" stat="jitter" />
         </div>
 
-        <div {...stylex.props(styles.directions)}>
-          <Direction direction="download" label="Download" targets={targets} />
-          <Direction direction="upload" label="Upload" targets={targets} />
-        </div>
+        <section {...stylex.props(styles.res)}>
+          <Direction label="Download" tone="download" targets={targets} />
+          <Direction label="Upload" tone="upload" targets={targets} />
+        </section>
 
-        <dl {...stylex.props(styles.stats)}>
-          <Stat label="Download latency" stat="downloadLatency" />
-          <Stat label="Downloaded" stat="downloaded" />
-          <Stat label="Upload latency" stat="uploadLatency" />
-          <Stat label="Uploaded" stat="uploaded" />
-        </dl>
+        <div {...stylex.props(styles.sub)}>
+          <Stat label="Download latency" stat="downloadLatency" size="sub" />
+          <Stat label="Downloaded" stat="downloaded" size="sub" />
+          <Stat label="Upload latency" stat="uploadLatency" size="sub" />
+          <Stat label="Uploaded" stat="uploaded" size="sub" />
+        </div>
 
         <dl {...stylex.props(styles.info)}>
-          <Info label="IP address" field="ip" hiddenSlot={hiddenJsx} />
+          <Info label="IP address" field="ip" />
           <Info label="Location" field="location" />
-          <Info label="Provider" field="isp" hiddenSlot={hiddenJsx} />
+          <Info label="Provider" field="isp" />
         </dl>
-        <p data-screenshot="hide" {...stylex.props(styles.footnote)}>
+
+        <footer {...stylex.props(styles.footer)}>
           <span>
-            Learn more about your IP at
+            &copy; 2026
             {' '}
-            {/* eslint-disable-next-line @eslint-react/dom-no-unsafe-target-blank -- our own site; the referrer is wanted */}
-            <a href="https://ip.skk.moe" target="_blank" {...stylex.props(styles.footnoteLink)}>ip.skk.moe</a>
+            <a href="https://inshadow.uk" {...stylex.props(styles.footerLink)}>inshadow.uk</a>
           </span>
-          <PrivacyToggle showSlot="Show details" hideSlot="Hide details" />
-        </p>
+          <span>
+            Based on
+            {' '}
+            <a href="https://speed.skk.moe" target="_blank" rel="noopener noreferrer" {...stylex.props(styles.footerLink)}>speed.skk.moe</a>
+            {' '}
+            by Sukka
+          </span>
+        </footer>
       </SpeedtestRoot>
     </ComposeContextProvider>
   );
 }
 
 interface DirectionProps {
-  direction: 'download' | 'upload',
   label: string,
+  tone: 'download' | 'upload',
   targets: readonly Target[]
 }
 
-function Direction({ direction, label, targets }: DirectionProps) {
+function Direction({ label, tone, targets }: DirectionProps) {
+  // DirectionSection still gates the upload block when the region has no upload endpoint.
   return (
-    <DirectionSection direction={direction} targets={targets}>
-      <h2 {...stylex.props(styles.directionLabel)}>
-        <svg
-          viewBox="0 0 12 12"
-          aria-hidden
-          {...stylex.props(styles.arrow, direction === 'download' ? styles.arrowDown : styles.arrowUp)}
-        >
-          <path d="M6 1.5v9M2.5 7l3.5 3.5L9.5 7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        {label}
-      </h2>
-      <SpeedReadout direction={direction} />
-      <div {...stylex.props(styles.chart)}>
-        <SpeedTrend direction={direction} />
-      </div>
+    <DirectionSection direction={tone} targets={targets}>
+      <div {...stylex.props(styles.lab, tone === 'download' ? styles.downloadLab : styles.uploadLab)}>{label}</div>
+      <SpeedReadout direction={tone} />
+      <SpeedTrend direction={tone} />
     </DirectionSection>
   );
 }
 
 interface StatProps {
   label: string,
-  stat: StatKey
+  stat: StatKey,
+  size?: 'row' | 'sub'
 }
 
-function Stat({ label, stat }: StatProps) {
+function Stat({ label, stat, size }: StatProps) {
   return (
     <div>
-      <dt {...stylex.props(styles.capsLabel)}>{label}</dt>
-      <StatValue stat={stat} />
+      <dt {...stylex.props(styles.lab)}>{label}</dt>
+      <StatValue stat={stat} size={size} />
     </div>
   );
 }
@@ -266,7 +260,7 @@ function Stat({ label, stat }: StatProps) {
 function Info({ label, ...value }: { label: string } & React.ComponentProps<typeof GeoValue>) {
   return (
     <div>
-      <dt {...stylex.props(styles.infoLabel)}>{label}</dt>
+      <dt {...stylex.props(styles.lab)}>{label}</dt>
       <GeoValue {...value} />
     </div>
   );

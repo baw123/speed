@@ -1,98 +1,129 @@
 'use client';
 
 import * as stylex from '@stylexjs/stylex';
-import { bp } from '../../styles/breakpoints.stylex';
-import { colors } from '../../styles/tokens.stylex';
+import { useEffect, useRef } from 'react';
+import { usePhase } from '@/context/speedtest';
 
-// The inshadow.uk homepage mark is lettering, not type: every glyph is a 15-unit monoline stroke on
-// a 801x168 grid (x-height 100-188, ascender 32, bowls r=37.5). These paths keep that system — the
-// n, s, h, a, d, o and w are the homepage's own geometry, and p, e, u, k follow the same rules.
+// The "inshadow" lettering copied from the reference: 15-unit monoline strokes on a 801×168 grid
+// (x-height 100–188, ascender 32, bowls r=37.5). The mark fades from a lit radial gradient centred
+// on the dot of the "i", and the "w" keeps only its x-height strokes via a clip path.
 const PATHS = [
-  // s
-  'M55 119C50 111 40 107.5 28 107.5C11 107.5 0 115 0 126C0 137 13 141 28 144C44 147 56 152 56 163C56 174 44 180.5 28 180.5C16 180.5 5 176 0 168',
-  // p
-  'M89 100V236M89 144a37.5 37.5 0 1 0 75 0a37.5 37.5 0 1 0 -75 0Z',
-  // e
-  'M272 144A37.5 37.5 0 1 1 258.6 115.3M272 144H197',
-  // e
-  'M380 144A37.5 37.5 0 1 1 366.6 115.3M380 144H305',
-  // d
-  'M413 144a37.5 37.5 0 1 0 75 0a37.5 37.5 0 1 0 -75 0ZM488 32V188',
   // i
-  'M576.5 100V188',
+  'M7.5 100V188',
   // n
-  'M617 100V188M617 144A37.5 37.5 0 0 1 692 144V188',
+  'M46.5 100V188M46.5 144A37.5 37.5 0 0 1 121.5 144V188',
   // s
-  'M780 119C775 111 765 107.5 753 107.5C736 107.5 725 115 725 126C725 137 738 141 753 144C769 147 781 152 781 163C781 174 769 180.5 753 180.5C741 180.5 730 176 725 168',
+  'M211.5 119C206.5 111 196.5 107.5 184.5 107.5C167.5 107.5 156.5 115 156.5 126C156.5 137 169.5 141 184.5 144C200.5 147 212.5 152 212.5 163C212.5 174 200.5 180.5 184.5 180.5C172.5 180.5 161.5 176 156.5 168',
   // h
-  'M814 32V188M814 144A37.5 37.5 0 0 1 889 144V188',
+  'M247.5 32V188M247.5 144A37.5 37.5 0 0 1 322.5 144V188',
   // a
-  'M922 144a37.5 37.5 0 1 0 75 0a37.5 37.5 0 1 0 -75 0ZM997 100V188',
+  'M356 144a37.5 37.5 0 1 0 75 0a37.5 37.5 0 1 0 -75 0ZM431 100V188',
   // d
-  'M1030 144a37.5 37.5 0 1 0 75 0a37.5 37.5 0 1 0 -75 0ZM1105 32V188',
+  'M464.5 144a37.5 37.5 0 1 0 75 0a37.5 37.5 0 1 0 -75 0ZM539.5 32V188',
   // o
-  'M1138 144a37.5 37.5 0 1 0 75 0a37.5 37.5 0 1 0 -75 0Z',
+  'M573 144a37.5 37.5 0 1 0 75 0a37.5 37.5 0 1 0 -75 0Z',
   // w
-  'M1250 100L1280 192L1310 100L1340 192L1370 100',
-  // u
-  'M1451 100V144A37.5 37.5 0 0 0 1526 144V100',
-  // k
-  'M1559 32V188M1609 100L1559 144L1615 192'
+  'M670.6 86L673.7 96L703.7 192L733.7 96L763.7 192L793.7 96L796.8 86'
 ];
 
-const DOTS: ReadonlyArray<readonly [number, number, number]> = [
-  [528.5, 180.5, 7.5]
-];
+const drift = stylex.keyframes({
+  '0%, 100%': { opacity: 1 },
+  '50%': { opacity: 0.3 }
+});
 
-/** The last dot belongs to the fading "inshadow.uk" run, so it takes the gradient too. */
-const TAIL_DOTS: ReadonlyArray<readonly [number, number, number]> = [
-  [1410.5, 180.5, 7.5]
-];
+const rise = stylex.keyframes({
+  from: { opacity: 0 },
+  to: { opacity: 1 }
+});
 
 const styles = stylex.create({
+  brand: {
+    position: 'relative',
+    width: 'min(100%, 60rem)',
+    lineHeight: 0,
+    animationName: {
+      default: 'none',
+      '@media (prefers-reduced-motion: no-preference)': rise
+    },
+    animationDuration: '1.8s',
+    animationTimingFunction: 'ease-out',
+    animationFillMode: 'both'
+  },
   mark: {
     display: 'block',
-    height: { default: 30, [bp.large]: 36 },
-    width: 'auto',
-    color: colors.ink,
+    width: '100%',
+    height: 'auto',
     overflow: 'visible'
+  },
+  strokes: {
+    fill: 'none',
+    stroke: 'url(#wordmark-lit)',
+    strokeWidth: 15,
+    strokeLinecap: 'butt',
+    strokeLinejoin: 'miter',
+    strokeMiterlimit: 8
+  },
+  drift: {
+    animationName: {
+      default: 'none',
+      '@media (prefers-reduced-motion: no-preference)': drift
+    },
+    animationDuration: '11s',
+    animationTimingFunction: 'ease-in-out',
+    animationDelay: '4.6s',
+    animationIterationCount: 'infinite'
   }
 });
 
-/** The wordmark, drawn as the homepage's monoline lettering so both sites read the same. */
-export function Wordmark() {
+interface WordmarkProps {
+  /** The start/stop button, absolutely positioned over the dot of the "i" by its own styles. */
+  button?: React.ReactNode
+}
+
+/** The "inshadow" wordmark; the light source of the page sits on the dot of the "i". */
+export function Wordmark({ button }: WordmarkProps) {
+  const phase = usePhase();
+  const gradRef = useRef<SVGRadialGradientElement>(null);
+  // The lit gradient's radius grows while a run is in progress and settles once it ends,
+  // mirroring the reference's expanding glow.
+  useEffect(() => {
+    const el = gradRef.current;
+    if (el === null) return;
+    const running = phase === 'latency' || phase === 'download' || phase === 'upload';
+    el.setAttribute('r', running ? '1260' : phase === 'done' ? '700' : '360');
+  }, [phase]);
+
   return (
-    <svg viewBox="-40 -10 1695 253.5" role="img" aria-label="speed.inshadow.uk" {...stylex.props(styles.mark)}>
-      <defs>
-        {/* The dot of the "i" is a light source on the homepage: hot core inside a soft halo. */}
-        <radialGradient id="wordmark-glow">
-          <stop offset="0%" stopColor="#F7FAFC" stopOpacity={0.5} />
-          <stop offset="30%" stopColor="#F7FAFC" stopOpacity={0.18} />
-          <stop offset="100%" stopColor="#F7FAFC" stopOpacity={0} />
-        </radialGradient>
-        {/* "inshadow.uk" dims as it walks away from the light, exactly like the homepage mark. */}
-        <linearGradient id="wordmark-fade" gradientUnits="userSpaceOnUse" x1={560} y1={0} x2={1600} y2={0}>
-          <stop offset="0%" stopColor="#EDF2F7" />
-          <stop offset="35%" stopColor="#8E97A3" />
-          <stop offset="100%" stopColor="#22262D" />
-        </linearGradient>
-      </defs>
-      {/* "speed." stays at full ink. */}
-      <g fill="none" stroke="currentColor" strokeWidth={15} strokeLinecap="round" strokeLinejoin="round">
-        {PATHS.slice(0, 5).map((d) => <path key={d} d={d} />)}
-      </g>
-      {/* "inshadow.uk" fades into the dark. */}
-      <g fill="none" stroke="url(#wordmark-fade)" strokeWidth={15} strokeLinecap="round" strokeLinejoin="round">
-        {PATHS.slice(5).map((d) => <path key={d} d={d} />)}
-      </g>
-      <circle cx={576.5} cy={70} r={64} fill="url(#wordmark-glow)" style={{ mixBlendMode: 'screen' }} />
-      <g fill="#F7FAFC">
-        {DOTS.map(([cx, cy, r]) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} />)}
-        <circle cx={576.5} cy={70} r={10} />
-      </g>
-      <g fill="url(#wordmark-fade)">
-        {TAIL_DOTS.map(([cx, cy, r]) => <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} />)}
-      </g>
-    </svg>
+    <div {...stylex.props(styles.brand)} role="img" aria-label="inshadow">
+      <svg viewBox="0 26 801 168" aria-hidden="true" focusable="false" {...stylex.props(styles.mark)}>
+        <defs>
+          <radialGradient
+            id="wordmark-lit"
+            ref={gradRef}
+            gradientUnits="userSpaceOnUse"
+            cx="7.5"
+            cy="50"
+            r="360"
+            style={{ transition: 'r 4s ease' }}
+          >
+            <stop offset="0" stopColor="#bcc4cd" />
+            <stop offset="0.06" stopColor="#848f9a" />
+            <stop offset="0.18" stopColor="#49525c" />
+            <stop offset="0.36" stopColor="#2a323a" />
+            <stop offset="0.62" stopColor="#1a2027" />
+            <stop offset="1" stopColor="#14191f" />
+          </radialGradient>
+          <clipPath id="wordmark-xh"><rect x="-10" y="100" width="1100" height="88" /></clipPath>
+        </defs>
+        <g {...stylex.props(styles.strokes)}>
+          {PATHS.slice(0, 3).map((d) => <path key={d} d={d} />)}
+          <g {...stylex.props(styles.drift)}>
+            {PATHS.slice(3, 7).map((d) => <path key={d} d={d} />)}
+            <g clipPath="url(#wordmark-xh)"><path d={PATHS[7]} /></g>
+          </g>
+        </g>
+      </svg>
+      {button}
+    </div>
   );
 }

@@ -5,7 +5,7 @@ import { colors } from '../../styles/tokens.stylex';
 const WIDTH = 100;
 const HEIGHT = 40;
 // Leaves headroom so the plateau never touches the top edge.
-const PEAK_HEIGHT = HEIGHT * 0.92;
+const PEAK_HEIGHT = HEIGHT * 0.9;
 /** Every Nth sample becomes a curve point; fewer points means fewer wiggles to trace. */
 const POINT_STRIDE = 2;
 
@@ -29,60 +29,60 @@ function curvePath(points: readonly Point[]) {
   return d;
 }
 
+const FILL: Record<'download' | 'upload', string> = {
+  download: '#8fa3bd',
+  upload: '#c9b387'
+};
+
+const STROKE: Record<'download' | 'upload', string> = {
+  download: colors.download,
+  upload: colors.upload
+};
+
 const styles = stylex.create({
   frame: {
     position: 'relative',
-    width: '100%',
-    height: '100%'
+    height: 'clamp(64px, 9vw, 96px)',
+    borderBottomWidth: 1,
+    borderBottomStyle: 'solid',
+    borderBottomColor: colors.line
   },
   svg: {
-    display: 'block',
+    position: 'absolute',
+    inset: 0,
     width: '100%',
     height: '100%',
     overflow: 'visible'
   },
-  download: { color: colors.download },
-  upload: { color: colors.upload },
-  baseline: {
-    stroke: colors.line,
-    strokeWidth: 1,
-    vectorEffect: 'non-scaling-stroke'
-  },
   edge: {
     fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.5,
+    strokeWidth: 1.4,
     strokeLinejoin: 'round',
     vectorEffect: 'non-scaling-stroke'
   },
-  // Neutral rather than the panel's tone, so the line reads against the fill it crosses.
   marker: {
-    stroke: colors.inkMuted,
-    strokeWidth: 1.25,
-    strokeDasharray: '4 3',
+    stroke: '#8a929e',
+    strokeWidth: 1,
+    strokeDasharray: '3 3',
     vectorEffect: 'non-scaling-stroke'
   },
-  // Lives outside the SVG: the drawing is stretched to the box, so text inside it would be too.
   markerLabel: {
     position: 'absolute',
-    right: 12,
-    transform: 'translateY(-100%)',
-    paddingBottom: 3,
-    fontSize: 11,
-    lineHeight: 1,
-    fontWeight: 500,
-    letterSpacing: '0.02em',
+    right: 0,
+    fontSize: 12,
+    fontStyle: 'italic',
     color: colors.inkMuted,
+    opacity: 0,
+    transitionProperty: 'opacity',
+    transitionDuration: '500ms',
     pointerEvents: 'none'
   },
-  markerLabelAt: (top: number) => ({ top: `${top}%` })
+  markerLabelAt: (top: number) => ({ top: `calc(${top}% - 18px)`, opacity: 1 })
 });
 
 interface TrendChartProps {
   samples: readonly number[],
-  /** Sample slots across the full width; the chart fills left to right until they are used up. */
   capacity: number,
-  /** The result the phase is heading for, drawn as a reference line across the curve. */
   marker: number | null,
   markerLabel: string,
   tone: 'download' | 'upload'
@@ -100,7 +100,7 @@ export function TrendChart({ samples, capacity, marker, markerLabel, tone }: Tre
   const markerY = marker === null || marker <= 0 ? null : HEIGHT - (marker / peak) * PEAK_HEIGHT;
 
   return (
-    <div {...stylex.props(styles.frame, styles[tone])}>
+    <div {...stylex.props(styles.frame)}>
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         preserveAspectRatio="none"
@@ -109,15 +109,14 @@ export function TrendChart({ samples, capacity, marker, markerLabel, tone }: Tre
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="currentColor" stopOpacity="0.75" />
-            <stop offset="1" stopColor="currentColor" stopOpacity="0.1" />
+            <stop offset="0" stopColor={FILL[tone]} stopOpacity={tone === 'download' ? 0.6 : 0.55} />
+            <stop offset="1" stopColor={FILL[tone]} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <line x1="0" y1={HEIGHT} x2={WIDTH} y2={HEIGHT} {...stylex.props(styles.baseline)} />
         {line != null && (
           <>
             <path d={`${line} L${points.at(-1)?.x ?? 0},${HEIGHT} L0,${HEIGHT} Z`} fill={`url(#${gradientId})`} />
-            <path d={line} {...stylex.props(styles.edge)} />
+            <path d={line} stroke={STROKE[tone]} {...stylex.props(styles.edge)} />
           </>
         )}
         {markerY !== null && <line x1="0" y1={markerY} x2={WIDTH} y2={markerY} {...stylex.props(styles.marker)} />}

@@ -1,133 +1,179 @@
 'use client';
 
 import * as stylex from '@stylexjs/stylex';
-import { use } from 'react';
-import { Button } from '@base-ui/react/button';
-import { DownloadContext, UploadContext, useMode, usePhase, useRunning } from '@/context/speedtest';
+import { useEffect, useState } from 'react';
+import { useMode, usePhase, useRunning } from '@/context/speedtest';
 import { useGeo } from '@/hooks/use-geo';
 import { useSpeedtestControls } from '@/hooks/use-speedtest';
 import { useTarget } from '@/hooks/use-target';
-import { LATENCY_BUDGET } from '@/lib/engine';
-import type { Phase } from '@/lib/engine';
-import { MAX_DURATION, MIN_DURATION, SAMPLE_INTERVAL } from '@/lib/stability';
 import type { Target } from '@/lib/targets';
-import { bp } from '../../styles/breakpoints.stylex';
-import { colors } from '../../styles/tokens.stylex';
 
-const STAGES: readonly Phase[] = ['latency', 'download', 'upload'];
-const MAX_SAMPLES = Math.round(MAX_DURATION / SAMPLE_INTERVAL);
-// Each phase's share of the fill is how long it usually takes, in seconds: latency spends its
-// budget, and most transfers stop soon after the minimum.
-const LATENCY_SHARE = LATENCY_BUDGET / 1000;
-const TRANSFER_SHARE = MIN_DURATION;
+const ring = stylex.keyframes({
+  '50%': { borderColor: 'rgba(235,240,248,0.3)' }
+});
 
-/**
- * How far through its share a transfer is, read off the stop rule's own clock (one trend point per
- * sample): about 81% by the earliest it can stop. It never reaches the end, since the engine still
- * settles after the last sample; the next phase is what completes it.
- */
-function transferProgress(samples: number) {
-  const remaining = 1 - Math.min(1, samples / MAX_SAMPLES);
-  return 0.95 * (1 - (remaining ** 3));
-}
+const ping = stylex.keyframes({
+  '50%': { transform: 'scale(1.1)' }
+});
+
+const call = stylex.keyframes({
+  '0%': { opacity: 0.7, transform: 'scale(1)' },
+  '100%': { opacity: 0, transform: 'scale(1.55)' }
+});
+
+const breath = stylex.keyframes({
+  '50%': { transform: 'scale(1.1)' }
+});
 
 const styles = stylex.create({
-  // A small-caps line with a hairline underline; no box, no fill.
-  button: {
-    position: 'relative',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 8,
-    flexShrink: 0,
-    paddingTop: 0,
-    paddingInline: 0,
-    paddingBottom: 6,
-    borderStyle: 'none',
-    borderBottomWidth: 1,
-    borderBottomStyle: 'solid',
-    borderBottomColor: { default: colors.line, ':hover': colors.ink },
-    backgroundColor: 'transparent',
-    color: colors.ink,
-    fontFamily: 'inherit',
-    fontSize: { default: 13, [bp.large]: 15 },
-    fontWeight: 300,
-    fontVariantCaps: 'all-small-caps',
-    lineHeight: 1.4,
-    letterSpacing: '0.16em',
-    cursor: { default: 'pointer', ':disabled': 'default' },
-    opacity: { default: 1, ':disabled': 0.5 },
-    outlineStyle: { default: 'none', ':focus-visible': 'solid' },
-    outlineWidth: 2,
-    outlineColor: colors.ink,
-    outlineOffset: 4,
-    transitionProperty: 'border-color, color',
-    transitionDuration: '150ms'
-  },
-  buttonQuiet: { color: colors.inkMuted },
-  // Progress is the underline itself, growing from the left as the run advances.
-  progress: {
+  // The button is anchored over the dot of the "i"; its size is a share of the wordmark width.
+  go: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: -1,
-    height: 1,
-    transformOrigin: 'left',
-    transform: 'scaleX(0)',
-    backgroundColor: colors.ink
+    left: '0.936%',
+    top: { default: '14.3%', '@media (max-width: 760px)': '6%' },
+    width: { default: '11.5%', '@media (max-width: 760px)': '15%' },
+    aspectRatio: '1',
+    transform: 'translate(-50%, -50%)',
+    padding: 0,
+    borderWidth: 1.5,
+    borderStyle: 'solid',
+    borderColor: 'rgba(235,240,248,0.7)',
+    borderRadius: '50%',
+    background: 'none',
+    backgroundColor: 'transparent',
+    display: 'grid',
+    placeItems: 'center',
+    cursor: { default: 'pointer', ':disabled': 'default' },
+    transitionProperty: 'border-color, transform',
+    transitionDuration: '300ms',
+    animationName: {
+      default: ring,
+      '@media (prefers-reduced-motion: reduce)': 'none'
+    },
+    animationDuration: '3.6s',
+    animationTimingFunction: 'ease-in-out',
+    animationIterationCount: 'infinite'
   },
-  progressTo: (transform: string, duration: string, easing: string) => ({
-    transform,
-    transitionProperty: 'transform',
-    transitionDuration: duration,
-    transitionTimingFunction: easing
-  })
+  // A transparent ring expands the hit area beyond the visible border.
+  hit: {
+    content: '""',
+    position: 'absolute',
+    inset: -10,
+    borderRadius: '50%'
+  },
+  // The intro pulse ring, shown once on the first visit.
+  pulse: {
+    content: '""',
+    position: 'absolute',
+    inset: -1.5,
+    borderRadius: '50%',
+    borderWidth: 1.5,
+    borderStyle: 'solid',
+    borderColor: 'rgba(235,240,248,0.6)',
+    opacity: 0,
+    pointerEvents: 'none'
+  },
+  pulseIntro: {
+    animationName: call,
+    animationDuration: '2.6s',
+    animationTimingFunction: 'ease-out',
+    animationDelay: '1.9s',
+    animationFillMode: 'both'
+  },
+  disc: {
+    width: '60%',
+    aspectRatio: '1',
+    borderRadius: '50%',
+    backgroundColor: '#f4f6fa',
+    display: 'grid',
+    placeItems: 'center',
+    boxShadow: '0 0 6px 1px rgba(255,255,255,0.9), 0 0 28px 6px rgba(170,185,210,0.35), 0 0 90px 24px rgba(110,125,150,0.12)'
+  },
+  discIntro: {
+    animationName: breath,
+    animationDuration: '2.6s',
+    animationTimingFunction: 'ease-in-out',
+    animationDelay: '1.9s',
+    animationFillMode: 'both'
+  },
+  icon: {
+    width: '56%',
+    height: '56%',
+    pointerEvents: 'none',
+    overflow: 'visible'
+  },
+  play: { display: 'block' },
+  pause: { display: 'none' },
+  goHover: {
+    borderColor: '#fff',
+    transform: 'translate(-50%, -50%) scale(1.04)'
+  },
+  goRunning: {
+    animationName: 'none',
+    borderColor: '#fff'
+  },
+  discRunning: {
+    animationName: {
+      default: ping,
+      '@media (prefers-reduced-motion: reduce)': 'none'
+    },
+    animationDuration: '1.1s',
+    animationTimingFunction: 'ease-in-out',
+    animationIterationCount: 'infinite'
+  }
 });
 
 interface StartButtonProps {
-  targets: readonly Target[],
-  idleSlot: React.ReactNode,
-  runningSlot: React.ReactNode,
-  doneSlot: React.ReactNode
+  targets: readonly Target[]
 }
 
-export function StartButton({ targets, idleSlot, runningSlot, doneSlot }: StartButtonProps) {
+/** The glowing dot on the "i": starts the test, stops it, and starts again once done. */
+export function StartButton({ targets }: StartButtonProps) {
   const phase = usePhase();
   const running = useRunning();
-  // The region is not settled until the lookup has answered.
   const { isLoading: locating } = useGeo();
   const target = useTarget(targets);
   const { start, stop } = useSpeedtestControls(useMode(), target);
-  const stages = target.upload.length > 0 ? STAGES : STAGES.slice(0, 2);
+  const [intro, setIntro] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('inshadow:speed-seen')) {
+        localStorage.setItem('inshadow:speed-seen', '1');
+        setIntro(true);
+        const t = setTimeout(() => setIntro(false), 5200);
+        return () => clearTimeout(t);
+      }
+    } catch { /* storage unavailable */ }
+  }, []);
+
   return (
-    <Button
+    <button
+      type="button"
       disabled={locating}
       onClick={running ? stop : start}
-      {...stylex.props(styles.button, running && styles.buttonQuiet)}
-    >
-      <Progress stages={stages} />
-      {phase === 'idle' && idleSlot}
-      {running && runningSlot}
-      {phase === 'done' && doneSlot}
-    </Button>
-  );
-}
-
-/** Latency fills its share over its time budget; a transfer is retargeted on every sample. */
-function Progress({ stages }: { stages: readonly Phase[] }) {
-  const phase = usePhase();
-  const { trend } = use(phase === 'upload' ? UploadContext : DownloadContext);
-  const current = stages.indexOf(phase);
-  const total = LATENCY_SHARE + (TRANSFER_SHARE * (stages.length - 1));
-  const transferStart = LATENCY_SHARE + (TRANSFER_SHARE * (current - 1));
-  return (
-    <span
-      aria-hidden
+      aria-label={running ? 'Stop speed test' : phase === 'done' ? 'Test again' : 'Start speed test'}
+      title={running ? 'Stop' : phase === 'done' ? 'Test again' : 'Start test'}
       {...stylex.props(
-        styles.progress,
-        phase === 'latency' && styles.progressTo(`scaleX(${LATENCY_SHARE / total})`, `${LATENCY_BUDGET}ms`, 'linear'),
-        // Spans two samples, so the fill keeps moving between them.
-        current > 0 && styles.progressTo(`scaleX(${(transferStart + (TRANSFER_SHARE * transferProgress(trend.length))) / total})`, '200ms', 'linear')
+        styles.go,
+        running && styles.goRunning
       )}
-    />
+    >
+      <span aria-hidden {...stylex.props(styles.hit)} />
+      <span aria-hidden {...stylex.props(styles.pulse, intro && styles.pulseIntro)} />
+      <span {...stylex.props(styles.disc, intro && styles.discIntro, running && styles.discRunning)}>
+        <svg viewBox="0 0 24 24" aria-hidden="true" {...stylex.props(styles.icon)}>
+          <path
+            d="M8.5 5.5v13l11-6.5z"
+            fill="#0b0d11"
+            {...stylex.props(styles.play, running && styles.pause)}
+          />
+          <g fill="#0b0d11" {...stylex.props(styles.pause, running && styles.play)}>
+            <rect x="6.5" y="5.5" width="4" height="13" rx="1" />
+            <rect x="13.5" y="5.5" width="4" height="13" rx="1" />
+          </g>
+        </svg>
+      </span>
+    </button>
   );
 }

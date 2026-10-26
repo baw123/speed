@@ -6,33 +6,49 @@ import { Button } from '@base-ui/react/button';
 import { noop } from 'foxts/noop';
 import { toast } from 'sonner';
 import { useCapturing, usePhase, useRedacted, useRoot, useSetCapturing, useSetRedacted } from '@/context/speedtest';
-import { bp } from '../../styles/breakpoints.stylex';
 import { colors } from '../../styles/tokens.stylex';
 
 const styles = stylex.create({
-  // A quiet caps label at the header's right end, same voice as the rest of the page.
+  // A quiet uppercase label pinned to the header's top-right, underlined by a hairline.
   trigger: {
+    position: 'absolute',
+    right: 0,
+    top: 'max(16px, 3vh)',
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 4,
-    paddingBlock: 4,
+    gap: 9,
+    paddingTop: 10,
     paddingInline: 0,
+    paddingBottom: 6,
     borderStyle: 'none',
+    borderBottomWidth: 1,
+    borderBottomStyle: 'solid',
+    borderBottomColor: colors.mid,
     backgroundColor: 'transparent',
-    color: { default: colors.inkMuted, ':hover': colors.ink },
+    color: { default: colors.inkMuted, ':hover': colors.lit },
     fontFamily: 'inherit',
-    fontSize: { default: 12, [bp.large]: 13 },
+    fontSize: 11,
     fontWeight: 300,
-    fontVariantCaps: 'all-small-caps',
-    letterSpacing: '0.16em',
+    letterSpacing: '0.2em',
+    textTransform: 'uppercase',
     cursor: { default: 'pointer', ':disabled': 'default' },
     opacity: { default: 1, ':disabled': 0.4 },
     outlineStyle: { default: 'none', ':focus-visible': 'solid' },
-    outlineWidth: 2,
-    outlineColor: colors.ink,
-    outlineOffset: 2,
-    transitionProperty: 'color',
-    transitionDuration: '150ms'
+    outlineWidth: 1,
+    outlineColor: colors.gold,
+    outlineOffset: 4,
+    transitionProperty: 'color, border-color',
+    transitionDuration: '300ms'
+  },
+  triggerHover: {
+    borderBottomColor: colors.lit
+  },
+  icon: {
+    width: 14,
+    height: 14,
+    stroke: 'currentColor',
+    fill: 'none',
+    strokeWidth: 1.4
   }
 });
 
@@ -106,6 +122,10 @@ export function ScreenshotButton({ children }: React.PropsWithChildren) {
       data-screenshot="hide"
       {...stylex.props(styles.trigger)}
     >
+      <svg viewBox="0 0 24 24" aria-hidden="true" {...stylex.props(styles.icon)}>
+        <path d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
+        <circle cx="12" cy="13.5" r="3.2" />
+      </svg>
       {children}
     </Button>
   );
