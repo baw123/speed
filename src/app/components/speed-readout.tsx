@@ -38,7 +38,7 @@ export function SpeedReadout({ direction }: { direction: 'download' | 'upload' }
   const figure = speed == null ? null : splitUnit(prettyBandwidth(speed * 1e6, { locale: 'en-US', minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   return (
     <p {...stylex.props(styles.value, figure === null && styles.empty)}>
-      {figure?.value ?? '0.00'}
+      {figure?.value ?? '0'}
       <span {...stylex.props(styles.unit)}>{figure?.unit ?? 'Mbps'}</span>
     </p>
   );
