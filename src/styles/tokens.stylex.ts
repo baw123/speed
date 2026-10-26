@@ -1,20 +1,21 @@
 import * as stylex from '@stylexjs/stylex';
 
-// Every colour resolves through `color-scheme` on <html>: the OS preference by default,
-// or the `.light` / `.dark` class the appearance menu applies (see globals.css).
+// Dark only, following inshadow.uk: a near-black base, and ink that recedes by opacity rather
+// than by separate hues. The page no longer ships a light scheme.
 export const colors = stylex.defineVars({
-  surface: 'light-dark(#F5F6F8, #121419)',
-  raised: 'light-dark(#FFFFFF, #1A1D24)',
-  ink: 'light-dark(#15181F, #ECEEF2)',
-  inkMuted: 'light-dark(#5B6270, #969CAA)',
-  inkFaint: 'light-dark(#A3A9B5, #5E6473)',
-  line: 'light-dark(#DDE1E7, #2A2E37)',
-  control: 'light-dark(#E7EAEF, #2B303A)',
-  download: 'light-dark(#2F6FE4, #5B8DEF)',
-  upload: 'light-dark(#C8731A, #C97C26)'
+  surface: '#06080B',
+  raised: 'rgba(214, 220, 227, 0.03)',
+  ink: '#D6DCE3',
+  inkMuted: 'rgba(214, 220, 227, 0.62)',
+  inkFaint: 'rgba(214, 220, 227, 0.34)',
+  line: 'rgba(214, 220, 227, 0.12)',
+  control: 'rgba(214, 220, 227, 0.06)',
+  download: '#BFD3E8',
+  upload: '#C9B49C'
 });
 
 export const fonts = stylex.defineVars({
-  sans: 'var(--font-barlow), system-ui, sans-serif',
-  condensed: 'var(--font-barlow-semi-condensed), var(--font-barlow), system-ui, sans-serif'
+  // Cormorant Light is the only face on the page, exactly as on the inshadow.uk homepage.
+  sans: 'var(--font-serif), "Cormorant Garamond", Garamond, "Iowan Old Style", Georgia, serif',
+  condensed: 'var(--font-serif), "Cormorant Garamond", Garamond, "Iowan Old Style", Georgia, serif'
 });
