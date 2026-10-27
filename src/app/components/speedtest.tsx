@@ -71,8 +71,12 @@ const styles = stylex.create({
     letterSpacing: '0.2em',
     textTransform: 'uppercase',
     color: colors.inkMuted,
-    marginBottom: 8
+    marginBottom: 8,
+    whiteSpace: 'nowrap'
   },
+  // Flex items must keep their natural width; an overfull row wraps to the next line
+  // instead of squeezing a label or value onto two lines.
+  item: { flexShrink: 0 },
   res: {
     display: 'grid',
     gridTemplateColumns: { default: '1fr 1fr', '@media (max-width: 760px)': '1fr' },
@@ -217,7 +221,7 @@ export function Speedtest({ targets }: SpeedtestProps) {
         </header>
 
         <div {...stylex.props(styles.row)}>
-          <div>
+          <div {...stylex.props(styles.item)}>
             <div {...stylex.props(styles.lab)}>Connections</div>
             <Connections />
           </div>
@@ -321,7 +325,7 @@ interface StatProps {
 
 function Stat({ label, stat, size }: StatProps) {
   return (
-    <div>
+    <div {...stylex.props(styles.item)}>
       <dt {...stylex.props(styles.lab)}>{label}</dt>
       <StatValue stat={stat} size={size} />
     </div>
@@ -330,7 +334,7 @@ function Stat({ label, stat, size }: StatProps) {
 
 function Info({ label, ...value }: { label: string } & React.ComponentProps<typeof GeoValue>) {
   return (
-    <div>
+    <div {...stylex.props(styles.item)}>
       <dt {...stylex.props(styles.lab)}>{label}</dt>
       <GeoValue {...value} />
     </div>
