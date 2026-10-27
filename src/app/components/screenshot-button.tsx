@@ -97,7 +97,7 @@ export function ScreenshotButton({ children }: React.PropsWithChildren) {
       width: node.offsetWidth + SCREENSHOT_MARGIN * 2,
       height: node.offsetHeight + SCREENSHOT_MARGIN * 2,
       style: { padding: `${SCREENSHOT_MARGIN}px` },
-      backgroundColor: getComputedStyle(document.documentElement).backgroundColor,
+      backgroundColor: colors.surface,
       filter: (el) => !(el instanceof HTMLElement) || el.dataset.screenshot !== 'hide'
     }));
     image.catch(noop).finally(() => {

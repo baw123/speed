@@ -1,7 +1,7 @@
 'use client';
 
 import * as stylex from '@stylexjs/stylex';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ComposeContextProvider } from 'foxact/compose-context-provider';
 import { Connections } from './connections';
 import { DirectionSection } from './direction-section';
@@ -21,6 +21,12 @@ import type { Target } from '@/lib/targets';
 const bloom = stylex.keyframes({
   '0%': { opacity: 0, transform: 'scale(0.05)' },
   '100%': { opacity: 1, transform: 'scale(1)' }
+});
+
+// The line under the wordmark fades whenever it swaps between tagline and stamp.
+const fadeIn = stylex.keyframes({
+  from: { opacity: 0 },
+  to: { opacity: 1 }
 });
 
 const styles = stylex.create({
@@ -52,8 +58,17 @@ const styles = stylex.create({
     fontSize: 'clamp(15px, 1.5vw, 19px)',
     color: colors.inkMuted,
     minHeight: '1.4em',
-    transitionProperty: 'opacity',
-    transitionDuration: '400ms'
+    animationName: {
+      default: fadeIn,
+      '@media (prefers-reduced-motion: reduce)': 'none'
+    },
+    animationDuration: '600ms',
+    animationTimingFunction: 'ease-out',
+    animationFillMode: 'both'
+  },
+  // The finished stamp is upright, so the address and time stay legible at a quiet size.
+  hintStamp: {
+    fontStyle: 'normal'
   },
   row: {
     display: 'flex',
@@ -194,7 +209,7 @@ export function Speedtest({ targets }: SpeedtestProps) {
         <Glow />
         <header {...stylex.props(styles.header)}>
           <Wordmark button={<StartButton targets={targets} />} />
-          <p {...stylex.props(styles.hint)}>Speed, in the quiet.</p>
+          <Hint />
           <ScreenshotButton>Screenshot</ScreenshotButton>
         </header>
 
@@ -220,14 +235,37 @@ export function Speedtest({ targets }: SpeedtestProps) {
         </div>
 
         <dl {...stylex.props(styles.info)}>
-          <Info label="IP address" field="ip" />
+          <Info label="IP address" field="ip" hiddenSlot="HIDDEN" />
           <Info label="Location" field="location" />
-          <Info label="Provider" field="isp" />
+          <Info label="Provider" field="isp" hiddenSlot="HIDDEN" />
         </dl>
 
         <Footer />
       </SpeedtestRoot>
     </ComposeContextProvider>
+  );
+}
+
+/** The finished stamp reads "speed.inshadow.uk · 27 Oct 2026, 14:32". */
+const stampFormat = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit', month: 'short', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+});
+
+/** Under the wordmark: the tagline at rest; the address and finish time once a run completes,
+ *  so every capture carries the site's signature without a trip to the footer. */
+function Hint() {
+  const phase = usePhase();
+  const [finishedAt, setFinishedAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (phase === 'done') setFinishedAt(Date.now());
+  }, [phase]);
+  const done = phase === 'done' && finishedAt !== null;
+  return (
+    // The key remounts the line on swap, replaying its fade.
+    <p key={done ? 'stamp' : 'tag'} {...stylex.props(styles.hint, done && styles.hintStamp)}>
+      {done ? `speed.inshadow.uk · ${stampFormat.format(finishedAt)}` : 'Speed, in the quiet.'}
+    </p>
   );
 }
 
