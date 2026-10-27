@@ -23,12 +23,6 @@ const bloom = stylex.keyframes({
   '100%': { opacity: 1, transform: 'scale(1)' }
 });
 
-// The line under the wordmark fades whenever it swaps between tagline and stamp.
-const fadeIn = stylex.keyframes({
-  from: { opacity: 0 },
-  to: { opacity: 1 }
-});
-
 const styles = stylex.create({
   glow: {
     position: 'fixed',
@@ -57,14 +51,7 @@ const styles = stylex.create({
     fontWeight: 300,
     fontSize: 'clamp(15px, 1.5vw, 19px)',
     color: colors.inkMuted,
-    minHeight: '1.4em',
-    animationName: {
-      default: fadeIn,
-      '@media (prefers-reduced-motion: reduce)': 'none'
-    },
-    animationDuration: '600ms',
-    animationTimingFunction: 'ease-out',
-    animationFillMode: 'both'
+    minHeight: '1.4em'
   },
   // The finished stamp is upright, so the address and time stay legible at a quiet size.
   hintStamp: {
@@ -274,12 +261,15 @@ function Hint() {
   const phase = usePhase();
   const [finishedAt, setFinishedAt] = useState<number | null>(null);
   useEffect(() => {
-    if (phase === 'done') setFinishedAt(Date.now());
+    if (phase === 'done') {
+      setFinishedAt(Date.now());
+      return;
+    }
+    if (phase === 'idle') setFinishedAt(null);
   }, [phase]);
   const done = phase === 'done' && finishedAt !== null;
   return (
-    // The key remounts the line on swap, replaying its fade.
-    <p key={done ? 'stamp' : 'tag'} {...stylex.props(styles.hint, done && styles.hintStamp)}>
+    <p {...stylex.props(styles.hint, done && styles.hintStamp)}>
       {done ? `speed.inshadow.uk · ${stampFormat.format(finishedAt)}` : 'Speed, in the quiet.'}
     </p>
   );

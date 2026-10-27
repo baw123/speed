@@ -43,10 +43,7 @@ const styles = stylex.create({
   },
   triggerHover: { borderBottomColor: colors.lit },
   // A subtle secondary action shown on desktop so the download path is always reachable.
-  secondary: {
-    marginLeft: 'clamp(12px, 2vw, 22px)',
-    borderBottomStyle: 'dotted'
-  },
+  secondary: { borderBottomStyle: 'dotted' },
   icon: {
     width: 14,
     height: 14,
@@ -54,9 +51,8 @@ const styles = stylex.create({
     fill: 'none',
     strokeWidth: 1.4
   },
-  labelFlash: {
-    color: colors.gold
-  },
+  // Gold flash for the 2-second feedback label.
+  labelFlash: { color: colors.gold },
   // Reset trigger's absolute positioning when the button sits inside a flex wrapper.
   buttonRelative: {
     position: 'relative',
@@ -71,30 +67,19 @@ const SCREENSHOT_MARGIN = 24;
 const downloadName = () =>
   `speed.inshadow.uk-${new Date().toISOString().slice(0, 19).replaceAll(RE_TIMESTAMP_SEPARATORS, '-')}.png`;
 
-// ── Runtime capability probes ────────────────────────────────────────────────
-
-/** True on touch-first devices where the user wants to save/share, not paste. */
 function detectMobile() {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(pointer: coarse)').matches;
+  return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 }
 
 function supportsImageClipboard() {
-  if (typeof ClipboardItem === 'undefined') return false;
-  if (!navigator.clipboard || typeof navigator.clipboard.write !== 'function') return false;
-  return true;
+  return typeof ClipboardItem !== 'undefined'
+    && typeof navigator.clipboard?.write === 'function';
 }
 
-function supportsWebShareFiles() {
-  const n: unknown = navigator;
-  const share = (n as { share?: unknown }).share;
-  if (typeof share !== 'function') return false;
-  const canShare = (n as { canShare?: (data: Record<string, unknown>) => boolean }).canShare;
-  if (typeof canShare !== 'function') return false;
-  try { return canShare({ files: [new File([], 'x.png', { type: 'image/png' })] }); } catch { return false; }
+function isShareable(file: File) {
+  const n = navigator as Navigator & { canShare?: (data: ShareData) => boolean };
+  return typeof n.share === 'function' && typeof n.canShare === 'function' && n.canShare({ files: [file] });
 }
-
-// ── Image pipeline ──────────────────────────────────────────────────────────
 
 function render(node: HTMLElement) {
   return import(/* webpackPrefetch: true */ 'modern-screenshot').then(({ domToBlob }) => domToBlob(node, {
@@ -107,130 +92,37 @@ function render(node: HTMLElement) {
   }));
 }
 
-/** Always works. Hand the blob to the browser's download. */
 function triggerDownload(blob: Blob) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = downloadName();
   link.click();
-  // A frame after the click the browser has consumed the URL.
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** Copy to clipboard. Must be called inside the click callback (Safari rule).
- *  Takes a Promise<Blob> — the browser can await it internally when ClipboardItem is built here. */
-function writeClipboard(imagePromise: Promise<Blob>) {
+/** Safari rule: ClipboardItem must be constructed inside the click task; it may hold a
+ *  Promise<Blob> so the async render still counts as user-triggered. */
+function writeClipboard(image: Promise<Blob>) {
   if (!supportsImageClipboard()) return Promise.reject(new Error('no clipboard'));
-  // Safari accepts a Promise<Blob> directly as ClipboardItem data (16.4+).
-  // eslint-disable-next-line vibe-proof/react-prefer-foxact-use-clipboard
-  return navigator.clipboard.write([new ClipboardItem({ 'image/png': imagePromise as unknown as Blob })]);
+  // eslint-disable-next-line vibe-proof/react-prefer-foxact-use-clipboard -- writes an image, not text
+  return navigator.clipboard.write([new ClipboardItem({ 'image/png': image as unknown as Blob })]);
 }
-
-/** Web Share API with the rendered PNG file. */
-async function shareViaSystem(imagePromise: Promise<Blob>) {
-  const blob = await imagePromise;
-  const file = new File([blob], downloadName(), { type: 'image/png' });
-  // navigator.share is a function; canShare was already positive.
-  await (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({
-    files: [file],
-    title: 'speed.inshadow.uk',
-    text: 'My speed test result'
-  });
-}
-
-// ── Button feedback state machine ──────────────────────────────────────────
 
 type Feedback = null | 'Copied' | 'Saved' | 'Try again';
 const FEEDBACK_MS = 2000;
 
-interface CaptureResult {
-  /** Label to flash on the button for 2s. */
-  label: NonNullable<Feedback>;
-  /** Optional toast — only when downgrading or fully failing. */
-  toast?: string;
-}
-
-/** Shared capture + mask setup. Returns the blob Promise; caller picks the delivery path. */
-function prepareCapture(
-  node: HTMLElement | null,
-  wasRedacted: boolean,
-  setRedacted: (v: boolean) => void,
-  setCapturing: (v: boolean) => void
-) {
-  if (node === null) return null;
-  // eslint-disable-next-line @eslint-react/dom-no-flush-sync -- clipboard / web-share both need this in the click path
-  flushSync(() => {
-    setRedacted(true);
-    setCapturing(true);
-  });
-  const image = render(node);
-  image.catch(noop).finally(() => {
-    setRedacted(wasRedacted);
-    setCapturing(false);
-  });
-  return image;
-}
-
-/** Mobile path: Web Share API first, fall back to download. */
-async function mobileAction(imagePromise: Promise<Blob>): Promise<CaptureResult> {
-  if (supportsWebShareFiles()) {
-    try {
-      await shareViaSystem(imagePromise);
-      return { label: 'Saved' };
-    } catch (err) {
-      // User cancelled the sheet — that's not a failure.
-      if ((err as { name?: string })?.name === 'AbortError') return { label: 'Saved' };
-      // Web share failed for another reason — fall through to download.
-    }
-  }
-  try {
-    triggerDownload(await imagePromise);
-    return { label: 'Saved' };
-  } catch {
-    return { label: 'Try again', toast: 'Screenshot failed' };
-  }
-}
-
-/** Desktop path: clipboard first, fall back to download. */
-async function desktopCopyAction(imagePromise: Promise<Blob>): Promise<CaptureResult> {
-  // Must be called inside the click callback — the ClipboardItem holds the Promise directly,
-  // so Safari (and Chrome) accept it even though the blob isn't ready yet.
-  try {
-    await writeClipboard(imagePromise);
-    return { label: 'Copied' };
-  } catch {
-    try {
-      triggerDownload(await imagePromise);
-      return { label: 'Saved', toast: 'Clipboard unavailable — saved to Downloads' };
-    } catch {
-      return { label: 'Try again', toast: 'Screenshot failed' };
-    }
-  }
-}
-
-/** Always-download variant for the small secondary Save button on desktop. */
-async function desktopSaveAction(imagePromise: Promise<Blob>): Promise<CaptureResult> {
-  try {
-    triggerDownload(await imagePromise);
-    return { label: 'Saved' };
-  } catch {
-    return { label: 'Try again', toast: 'Screenshot failed' };
-  }
-}
-
-// ── Component ───────────────────────────────────────────────────────────────
-
 interface ScreenshotButtonProps {
-  /** Static label. */
   children: React.ReactNode;
-  /** If true, this instance always does a download (the secondary Save button). */
+  /** Desktop-only secondary entry that always downloads instead of copying. */
   alwaysSave?: boolean;
-  /** When the button sits inside a flex wrapper (instead of being top-right absolute on its own),
-   *  reset its absolute positioning so the wrapper can lay it out. */
+  /** The buttons sit in a flex wrapper; drop the standalone absolute positioning. */
   relative?: boolean;
 }
 
+/** One image, three exits: system share sheet on mobile, clipboard on desktop, download as the
+ *  universal fallback. The PNG is pre-rendered the moment a run finishes, because iOS rejects
+ *  navigator.share called after any await — the file must already exist inside the click. */
 export function ScreenshotButton({ children, alwaysSave = false, relative = false }: ScreenshotButtonProps) {
   const phase = usePhase();
   const capturing = useCapturing();
@@ -241,43 +133,95 @@ export function ScreenshotButton({ children, alwaysSave = false, relative = fals
 
   const [feedback, setFeedback] = useState<Feedback>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const fileRef = useRef<File | null>(null);
+  const busy = useRef(false);
 
+  const flash = (label: NonNullable<Feedback>) => {
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    setFeedback(label);
+    feedbackTimer.current = setTimeout(() => setFeedback(null), FEEDBACK_MS);
+  };
+
+  // Pre-render the share image as soon as a run completes (and once the webfont is settled),
+  // with personal details masked — the file handed to the share sheet must never carry the IP.
   useEffect(() => {
-    setIsMobile(detectMobile());
-    const mq = window.matchMedia('(pointer: coarse)');
-    const onChange = () => setIsMobile(mq.matches);
-    mq.addEventListener?.('change', onChange) ?? mq.addListener?.(onChange);
-    return () => mq.removeEventListener?.('change', onChange) ?? mq.removeListener?.(onChange);
-  }, []);
+    if (phase !== 'done') {
+      fileRef.current = null;
+      return;
+    }
+    const node = root;
+    if (node === null) return;
+    let cancelled = false;
+    setRedacted(true);
+    setCapturing(true);
+    const done = () => {
+      if (cancelled) return;
+      setRedacted(false);
+      setCapturing(false);
+    };
+    (document.fonts?.ready ?? Promise.resolve())
+      .then(() => render(node))
+      .then((blob) => {
+        if (!cancelled) fileRef.current = new File([blob], downloadName(), { type: 'image/png' });
+      })
+      .catch(noop)
+      .finally(done);
+    return () => {
+      cancelled = true;
+      setRedacted(false);
+      setCapturing(false);
+    };
+  }, [phase, root, setCapturing, setRedacted]);
 
   const trigger = async () => {
-    if (capturing) return;
-    const node = root;
-    const wasRedacted = redacted;
-    const image = prepareCapture(node, wasRedacted, setRedacted, setCapturing);
-    if (image === null) return;
-
-    // Reset any previous flash.
-    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
-    setFeedback(null);
-
-    let result: CaptureResult;
+    if (busy.current) return;
+    busy.current = true;
     try {
-      if (alwaysSave) {
-        result = await desktopSaveAction(image);
-      } else if (isMobile) {
-        result = await mobileAction(image);
-      } else {
-        result = await desktopCopyAction(image);
-      }
-    } catch {
-      result = { label: 'Try again', toast: 'Screenshot failed' };
-    }
+      const file = fileRef.current;
+      const mobile = detectMobile();
 
-    if (result.toast) toast.success(result.toast);
-    setFeedback(result.label);
-    feedbackTimer.current = setTimeout(() => setFeedback(null), FEEDBACK_MS);
+      // The iOS share sheet needs the pre-rendered file inside this click.
+      if (mobile && !alwaysSave && file !== null && isShareable(file)) {
+        try {
+          await navigator.share({ files: [file] });
+          return; // Silent: the sheet itself is the feedback.
+        } catch (err) {
+          if ((err as { name?: string })?.name === 'AbortError') return;
+          // Fall through to clipboard/download.
+        }
+      }
+
+      // Copy from the pre-rendered file; re-render synchronously inside the click only if
+      // the pre-render never finished (e.g. the user clicked before the background task ran).
+      if (!alwaysSave) {
+        try {
+          const image = file !== null
+            ? Promise.resolve(file as Blob)
+            : (() => {
+                if (root === null) throw new Error('no root');
+                // eslint-disable-next-line @eslint-react/dom-no-flush-sync -- clipboard needs the masked DOM now
+                flushSync(() => { setRedacted(true); setCapturing(true); });
+                const p = render(root);
+                p.catch(noop).finally(() => { setRedacted(false); setCapturing(false); });
+                return p;
+              })();
+          await writeClipboard(image);
+          flash('Copied');
+          return;
+        } catch { /* fall through to download */ }
+      }
+
+      try {
+        const blob = file ?? await render(root!);
+        triggerDownload(blob);
+        flash('Saved');
+      } catch {
+        flash('Try again');
+        toast.error('Screenshot failed');
+      }
+    } finally {
+      busy.current = false;
+    }
   };
 
   const label = feedback ?? children;
