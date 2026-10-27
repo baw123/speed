@@ -8,7 +8,7 @@ import { DirectionSection } from './direction-section';
 import { GeoValue } from './geo-value';
 import { ScreenshotButton } from './screenshot-button';
 import { SpeedReadout, SpeedTrend } from './speed-readout';
-import { CapturingProvider, ChoiceProvider, DownloadProvider, JitterProvider, LatencyProvider, ModeProvider, PhaseProvider, RedactedProvider, RootProvider, UploadProvider, usePhase } from '@/context/speedtest';
+import { CapturingProvider, ChoiceProvider, DownloadProvider, JitterProvider, LatencyProvider, ModeProvider, PhaseProvider, RedactedProvider, RootProvider, UploadProvider, useCapturing, usePhase } from '@/context/speedtest';
 import { SpeedtestRoot } from './speedtest-root';
 import { StartButton } from './start-button';
 import { StatValue } from './stat-value';
@@ -17,13 +17,28 @@ import { Wordmark } from './wordmark';
 import { colors } from '../../styles/tokens.stylex';
 import type { Target } from '@/lib/targets';
 
+// The halo opens outward from the dot of the "i" on load, as if the dot were the light source.
+const bloom = stylex.keyframes({
+  '0%': { opacity: 0, transform: 'scale(0.05)' },
+  '100%': { opacity: 1, transform: 'scale(1)' }
+});
+
 const styles = stylex.create({
   glow: {
     position: 'fixed',
     inset: 0,
     pointerEvents: 'none',
     zIndex: 0,
-    background: 'radial-gradient(ellipse 60% 55% at var(--gx, 14%) var(--gy, 22%), rgba(120,135,155,calc(0.16 + var(--k, 0) * 0.14)), transparent 70%)'
+    background: 'radial-gradient(ellipse 60% 55% at var(--gx, 14%) var(--gy, 22%), rgba(120,135,155,calc(0.16 + var(--k, 0) * 0.14)), transparent 70%)',
+    transformOrigin: 'var(--gx, 14%) var(--gy, 22%)',
+    animationName: {
+      default: bloom,
+      '@media (prefers-reduced-motion: reduce)': 'none'
+    },
+    animationDuration: '2.8s',
+    animationTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+    animationDelay: '0.15s',
+    animationFillMode: 'backwards'
   },
   header: {
     position: 'relative',
@@ -110,6 +125,10 @@ const styles = stylex.create({
     borderBottomWidth: 1,
     borderBottomStyle: 'solid',
     borderBottomColor: colors.mid
+  },
+  // The footer is dropped while capturing, so the screenshot ends after the info row.
+  footerHidden: {
+    display: 'none'
   }
 });
 
@@ -206,22 +225,30 @@ export function Speedtest({ targets }: SpeedtestProps) {
           <Info label="Provider" field="isp" />
         </dl>
 
-        <footer {...stylex.props(styles.footer)}>
-          <span>
-            &copy; 2026
-            {' '}
-            <a href="https://inshadow.uk" {...stylex.props(styles.footerLink)}>inshadow.uk</a>
-          </span>
-          <span>
-            Based on
-            {' '}
-            <a href="https://speed.skk.moe" target="_blank" rel="noopener noreferrer" {...stylex.props(styles.footerLink)}>speed.skk.moe</a>
-            {' '}
-            by Sukka
-          </span>
-        </footer>
+        <Footer />
       </SpeedtestRoot>
     </ComposeContextProvider>
+  );
+}
+
+/** Site credits; hidden during capture so the screenshot stops at the info row. */
+function Footer() {
+  const capturing = useCapturing();
+  return (
+    <footer data-screenshot="hide" {...stylex.props(styles.footer, capturing && styles.footerHidden)}>
+      <span>
+        &copy; 2026
+        {' '}
+        <a href="https://inshadow.uk" {...stylex.props(styles.footerLink)}>inshadow.uk</a>
+      </span>
+      <span>
+        Based on
+        {' '}
+        <a href="https://speed.skk.moe" target="_blank" rel="noopener noreferrer" {...stylex.props(styles.footerLink)}>speed.skk.moe</a>
+        {' '}
+        by Sukka
+      </span>
+    </footer>
   );
 }
 

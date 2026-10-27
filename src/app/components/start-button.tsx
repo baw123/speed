@@ -1,27 +1,32 @@
 'use client';
 
 import * as stylex from '@stylexjs/stylex';
-import { useEffect, useState } from 'react';
 import { useMode, usePhase, useRunning } from '@/context/speedtest';
 import { useGeo } from '@/hooks/use-geo';
 import { useSpeedtestControls } from '@/hooks/use-speedtest';
 import { useTarget } from '@/hooks/use-target';
 import type { Target } from '@/lib/targets';
 
-const ring = stylex.keyframes({
+const breathe = stylex.keyframes({
   '50%': { borderColor: 'rgba(235,240,248,0.3)' }
 });
 
-const ping = stylex.keyframes({
-  '50%': { transform: 'scale(1.1)' }
+// On load the button grows out of the dot of the "i" (about 16% of the button width),
+// brightening as it goes, so it reads as the point the page's light comes from.
+const grow = stylex.keyframes({
+  '0%': { opacity: 0, transform: 'translate(-50%, -50%) scale(0.16)' },
+  '45%': { opacity: 1 },
+  '100%': { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' }
 });
 
+// One ripple of light travelling outward once the button has settled.
 const call = stylex.keyframes({
-  '0%': { opacity: 0.7, transform: 'scale(1)' },
-  '100%': { opacity: 0, transform: 'scale(1.55)' }
+  '0%': { opacity: 0, transform: 'scale(1)' },
+  '30%': { opacity: 0.55 },
+  '100%': { opacity: 0, transform: 'scale(1.6)' }
 });
 
-const breath = stylex.keyframes({
+const ping = stylex.keyframes({
   '50%': { transform: 'scale(1.1)' }
 });
 
@@ -35,24 +40,19 @@ const styles = stylex.create({
     aspectRatio: '1',
     transform: 'translate(-50%, -50%)',
     padding: 0,
-    borderWidth: 1.5,
-    borderStyle: 'solid',
-    borderColor: 'rgba(235,240,248,0.7)',
-    borderRadius: '50%',
-    background: 'none',
+    borderStyle: 'none',
     backgroundColor: 'transparent',
     display: 'grid',
     placeItems: 'center',
     cursor: { default: 'pointer', ':disabled': 'default' },
-    transitionProperty: 'border-color, transform',
-    transitionDuration: '300ms',
     animationName: {
-      default: ring,
+      default: grow,
       '@media (prefers-reduced-motion: reduce)': 'none'
     },
-    animationDuration: '3.6s',
-    animationTimingFunction: 'ease-in-out',
-    animationIterationCount: 'infinite'
+    animationDuration: '1.9s',
+    animationTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+    animationDelay: '0.35s',
+    animationFillMode: 'backwards'
   },
   // A transparent ring expands the hit area beyond the visible border.
   hit: {
@@ -61,7 +61,30 @@ const styles = stylex.create({
     inset: -10,
     borderRadius: '50%'
   },
-  // The intro pulse ring, shown once on the first visit.
+  // The visible hairline ring, breathing slowly while the test is idle.
+  circle: {
+    position: 'absolute',
+    inset: 0,
+    borderWidth: 1.5,
+    borderStyle: 'solid',
+    borderColor: 'rgba(235,240,248,0.7)',
+    borderRadius: '50%',
+    pointerEvents: 'none',
+    transitionProperty: 'border-color',
+    transitionDuration: '300ms',
+    animationName: {
+      default: breathe,
+      '@media (prefers-reduced-motion: reduce)': 'none'
+    },
+    animationDuration: '3.6s',
+    animationTimingFunction: 'ease-in-out',
+    animationIterationCount: 'infinite'
+  },
+  circleRunning: {
+    animationName: 'none',
+    borderColor: '#fff'
+  },
+  // The ripple ring, travelling outward once on load.
   pulse: {
     content: '""',
     position: 'absolute',
@@ -71,14 +94,15 @@ const styles = stylex.create({
     borderStyle: 'solid',
     borderColor: 'rgba(235,240,248,0.6)',
     opacity: 0,
-    pointerEvents: 'none'
-  },
-  pulseIntro: {
-    animationName: call,
-    animationDuration: '2.6s',
+    pointerEvents: 'none',
+    animationName: {
+      default: call,
+      '@media (prefers-reduced-motion: reduce)': 'none'
+    },
+    animationDuration: '2.4s',
     animationTimingFunction: 'ease-out',
-    animationDelay: '1.9s',
-    animationFillMode: 'both'
+    animationDelay: '1.5s',
+    animationFillMode: 'backwards'
   },
   disc: {
     width: '60%',
@@ -88,13 +112,6 @@ const styles = stylex.create({
     display: 'grid',
     placeItems: 'center',
     boxShadow: '0 0 6px 1px rgba(255,255,255,0.9), 0 0 28px 6px rgba(170,185,210,0.35), 0 0 90px 24px rgba(110,125,150,0.12)'
-  },
-  discIntro: {
-    animationName: breath,
-    animationDuration: '2.6s',
-    animationTimingFunction: 'ease-in-out',
-    animationDelay: '1.9s',
-    animationFillMode: 'both'
   },
   icon: {
     width: '56%',
@@ -107,10 +124,6 @@ const styles = stylex.create({
   goHover: {
     borderColor: '#fff',
     transform: 'translate(-50%, -50%) scale(1.04)'
-  },
-  goRunning: {
-    animationName: 'none',
-    borderColor: '#fff'
   },
   discRunning: {
     animationName: {
@@ -134,18 +147,6 @@ export function StartButton({ targets }: StartButtonProps) {
   const { isLoading: locating } = useGeo();
   const target = useTarget(targets);
   const { start, stop } = useSpeedtestControls(useMode(), target);
-  const [intro, setIntro] = useState(false);
-
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem('inshadow:speed-seen')) {
-        localStorage.setItem('inshadow:speed-seen', '1');
-        setIntro(true);
-        const t = setTimeout(() => setIntro(false), 5200);
-        return () => clearTimeout(t);
-      }
-    } catch { /* storage unavailable */ }
-  }, []);
 
   return (
     <button
@@ -154,14 +155,12 @@ export function StartButton({ targets }: StartButtonProps) {
       onClick={running ? stop : start}
       aria-label={running ? 'Stop speed test' : phase === 'done' ? 'Test again' : 'Start speed test'}
       title={running ? 'Stop' : phase === 'done' ? 'Test again' : 'Start test'}
-      {...stylex.props(
-        styles.go,
-        running && styles.goRunning
-      )}
+      {...stylex.props(styles.go)}
     >
       <span aria-hidden {...stylex.props(styles.hit)} />
-      <span aria-hidden {...stylex.props(styles.pulse, intro && styles.pulseIntro)} />
-      <span {...stylex.props(styles.disc, intro && styles.discIntro, running && styles.discRunning)}>
+      <span aria-hidden {...stylex.props(styles.circle, running && styles.circleRunning)} />
+      <span aria-hidden {...stylex.props(styles.pulse)} />
+      <span {...stylex.props(styles.disc, running && styles.discRunning)}>
         <svg viewBox="0 0 24 24" aria-hidden="true" {...stylex.props(styles.icon)}>
           <path
             d="M8.5 5.5v13l11-6.5z"
