@@ -142,9 +142,20 @@ const styles = stylex.create({
     borderBottomColor: colors.mid
   },
   // The footer is dropped while capturing, so the screenshot ends after the info row.
-  footerHidden: {
-    display: 'none'
-  }
+  footerHidden: { display: 'none' },
+  // Two action buttons stacked in the top-right corner on desktop; only Screenshot on mobile,
+  // where Screenshot triggers the system share sheet (or a plain download as fallback).
+  screenshotGroup: {
+    position: 'absolute',
+    right: 0,
+    top: 'max(16px, 3vh)',
+    display: 'inline-flex',
+    alignItems: 'flex-end',
+    gap: 'clamp(12px, 2vw, 22px)'
+  },
+  saveHideMobile: { display: { default: 'inline-flex', '@media (max-width: 760px)': 'none' } },
+  // Both buttons are absolute inside the group — reset so flex can lay them out.
+  buttonRelative: { position: 'relative', top: 'auto', right: 'auto' }
 });
 
 /** One `createContextState` per concern, so a leaf re-renders only for the state it reads. */
@@ -210,7 +221,12 @@ export function Speedtest({ targets }: SpeedtestProps) {
         <header {...stylex.props(styles.header)}>
           <Wordmark button={<StartButton targets={targets} />} />
           <Hint />
-          <ScreenshotButton>Screenshot</ScreenshotButton>
+          <div data-screenshot="hide" {...stylex.props(styles.screenshotGroup)}>
+            <ScreenshotButton relative>Screenshot</ScreenshotButton>
+            <span {...stylex.props(styles.saveHideMobile)}>
+              <ScreenshotButton relative alwaysSave>Save</ScreenshotButton>
+            </span>
+          </div>
         </header>
 
         <div {...stylex.props(styles.row)}>
