@@ -105,7 +105,7 @@ const styles = stylex.create({
     paddingTop: 36,
     display: 'flex',
     flexWrap: 'wrap',
-    columnGap: { default: 64, '@media (max-width: 760px)': 40 },
+    columnGap: { default: 64, '@media (max-width: 760px)': 24 },
     rowGap: 28,
     alignItems: 'flex-end'
   },

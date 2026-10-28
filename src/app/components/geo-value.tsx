@@ -16,13 +16,15 @@ const styles = stylex.create({
   infoValue: {
     display: 'block',
     marginTop: 0,
-    fontSize: { default: 26, '@media (max-width: 760px)': 22 },
+    fontSize: { default: 22, '@media (max-width: 760px)': 17 },
     fontWeight: 300,
     lineHeight: 1.3,
     color: colors.lit,
-    fontVariantNumeric: 'lining-nums tabular-nums',
-    overflowWrap: 'anywhere'
+    fontVariantNumeric: 'lining-nums tabular-nums'
   },
+  // The masked values (HIDDEN and the bare country) are short single words, so they must never
+  // be broken mid-word; the live IPv6 keeps its group-level breaks via <wbr>.
+  infoValueHidden: { whiteSpace: 'nowrap' },
   empty: { color: colors.inkFaint },
   // Height is the value's font-size and the row its line-height, so nothing shifts when the lookup lands.
   skeletonRow: {
@@ -80,9 +82,10 @@ interface GeoValueProps {
 
 export function GeoValue({ field, hiddenSlot }: GeoValueProps) {
   const { data: geo, isLoading } = useGeo();
-  const value = read(field, geo, useRedacted(), hiddenSlot);
+  const redacted = useRedacted();
+  const value = read(field, geo, redacted, hiddenSlot);
   return (
-    <dd {...stylex.props(styles.infoValue, !isLoading && !value && styles.empty)}>
+    <dd {...stylex.props(styles.infoValue, redacted && styles.infoValueHidden, !isLoading && !value && styles.empty)}>
       {isLoading
         ? <span {...stylex.props(styles.skeletonRow)}><span {...stylex.props(styles.skeleton, SKELETON[field])} /></span>
         : value || '—'}
