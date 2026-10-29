@@ -26,8 +26,24 @@ const call = stylex.keyframes({
   '100%': { opacity: 0, transform: 'scale(1.6)' }
 });
 
-const ping = stylex.keyframes({
-  '50%': { transform: 'scale(1.1)' }
+// While a run is active the dot sends a ring of light outward; one wave per 3.2s breath, and the
+// wordmark's shadow dims at the same beat (see wordmark.tsx).
+const waveOuter = stylex.keyframes({
+  '0%': { opacity: 0, transform: 'scale(1)' },
+  '10%': { opacity: 0.55 },
+  '55%': { opacity: 0.22 },
+  '100%': { opacity: 0, transform: 'scale(3.6)' }
+});
+
+// A second, tighter ring layered on the same beat so the light reads as continuous.
+const waveInner = stylex.keyframes({
+  '0%': { opacity: 0, transform: 'scale(1)' },
+  '10%': { opacity: 0.4 },
+  '100%': { opacity: 0, transform: 'scale(2.1)' }
+});
+
+const discBreath = stylex.keyframes({
+  '50%': { transform: 'scale(1.06)' }
 });
 
 const styles = stylex.create({
@@ -104,6 +120,33 @@ const styles = stylex.create({
     animationDelay: '1.5s',
     animationFillMode: 'backwards'
   },
+  // The ripple rings that travel outward while a run is active.
+  ripple: {
+    position: 'absolute',
+    inset: 0,
+    borderRadius: '50%',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: 'rgba(224,233,246,0.55)',
+    boxShadow: '0 0 18px 2px rgba(180,200,228,0.28)',
+    opacity: 0,
+    pointerEvents: 'none',
+    animationDuration: '3.2s',
+    animationTimingFunction: 'cubic-bezier(0.16, 0.6, 0.3, 1)',
+    animationIterationCount: 'infinite'
+  },
+  rippleOuter: {
+    animationName: {
+      default: waveOuter,
+      '@media (prefers-reduced-motion: reduce)': 'none'
+    }
+  },
+  rippleInner: {
+    animationName: {
+      default: waveInner,
+      '@media (prefers-reduced-motion: reduce)': 'none'
+    }
+  },
   disc: {
     width: '60%',
     aspectRatio: '1',
@@ -127,10 +170,10 @@ const styles = stylex.create({
   },
   discRunning: {
     animationName: {
-      default: ping,
+      default: discBreath,
       '@media (prefers-reduced-motion: reduce)': 'none'
     },
-    animationDuration: '1.1s',
+    animationDuration: '3.2s',
     animationTimingFunction: 'ease-in-out',
     animationIterationCount: 'infinite'
   }
@@ -160,6 +203,12 @@ export function StartButton({ targets }: StartButtonProps) {
       <span aria-hidden {...stylex.props(styles.hit)} />
       <span aria-hidden {...stylex.props(styles.circle, running && styles.circleRunning)} />
       <span aria-hidden {...stylex.props(styles.pulse)} />
+      {running && (
+        <>
+          <span aria-hidden {...stylex.props(styles.ripple, styles.rippleOuter)} />
+          <span aria-hidden {...stylex.props(styles.ripple, styles.rippleInner)} />
+        </>
+      )}
       <span {...stylex.props(styles.disc, running && styles.discRunning)}>
         <svg viewBox="0 0 24 24" aria-hidden="true" {...stylex.props(styles.icon)}>
           <path

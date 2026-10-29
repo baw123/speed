@@ -36,6 +36,13 @@ const rise = stylex.keyframes({
   to: { opacity: 1 }
 });
 
+// Each breath of the button sends light outward, so the lettering sinks into shadow at the peak
+// of the wave and comes back up — the same 3.2s beat as the ripples in start-button.tsx.
+const dim = stylex.keyframes({
+  '0%, 100%': { opacity: 1 },
+  '50%': { opacity: 0.5 }
+});
+
 const styles = stylex.create({
   brand: {
     position: 'relative',
@@ -61,7 +68,20 @@ const styles = stylex.create({
     strokeWidth: 15,
     strokeLinecap: 'butt',
     strokeLinejoin: 'miter',
-    strokeMiterlimit: 8
+    strokeMiterlimit: 8,
+    transitionProperty: 'opacity',
+    transitionDuration: '700ms',
+    transitionTimingFunction: 'ease-out'
+  },
+  // The breath while a run is active.
+  strokesDim: {
+    animationName: {
+      default: dim,
+      '@media (prefers-reduced-motion: reduce)': 'none'
+    },
+    animationDuration: '3.2s',
+    animationTimingFunction: 'ease-in-out',
+    animationIterationCount: 'infinite'
   },
   drift: {
     animationName: {
@@ -84,14 +104,14 @@ interface WordmarkProps {
 export function Wordmark({ button }: WordmarkProps) {
   const phase = usePhase();
   const gradRef = useRef<SVGRadialGradientElement>(null);
+  const running = phase === 'latency' || phase === 'download' || phase === 'upload';
   // The lit gradient's radius grows while a run is in progress and settles once it ends,
   // mirroring the reference's expanding glow.
   useEffect(() => {
     const el = gradRef.current;
     if (el === null) return;
-    const running = phase === 'latency' || phase === 'download' || phase === 'upload';
     el.setAttribute('r', running ? '1260' : phase === 'done' ? '700' : '360');
-  }, [phase]);
+  }, [phase, running]);
 
   return (
     <div {...stylex.props(styles.brand)} role="img" aria-label="inshadow">
@@ -115,7 +135,7 @@ export function Wordmark({ button }: WordmarkProps) {
           </radialGradient>
           <clipPath id="wordmark-xh"><rect x="-10" y="100" width="1100" height="88" /></clipPath>
         </defs>
-        <g {...stylex.props(styles.strokes)}>
+        <g {...stylex.props(styles.strokes, running && styles.strokesDim)}>
           {PATHS.slice(0, 3).map((d) => <path key={d} d={d} />)}
           <g {...stylex.props(styles.drift)}>
             {PATHS.slice(3, 7).map((d) => <path key={d} d={d} />)}
