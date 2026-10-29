@@ -64,8 +64,13 @@ const styles = stylex.create({
 const RE_TIMESTAMP_SEPARATORS = /[:T]/g;
 /** CSS px of page background kept around the captured block. */
 const SCREENSHOT_MARGIN = 24;
+const SCALE = 2;
 const downloadName = () =>
   `speed.inshadow.uk-${new Date().toISOString().slice(0, 19).replaceAll(RE_TIMESTAMP_SEPARATORS, '-')}.png`;
+
+/** Yield a couple of frames so React has committed the capture state (masked values, tightened
+ *  mobile header) and the browser has recomputed styles before the DOM is cloned. */
+const nextFrame = () => new Promise<void>((resolve) => { requestAnimationFrame(() => { resolve(); }); });
 
 function detectMobile() {
   return typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
@@ -81,15 +86,19 @@ function isShareable(file: File) {
   return typeof n.share === 'function' && typeof n.canShare === 'function' && n.canShare({ files: [file] });
 }
 
-function render(node: HTMLElement) {
-  return import(/* webpackPrefetch: true */ 'modern-screenshot').then(({ domToBlob }) => domToBlob(node, {
-    scale: 2,
+async function render(node: HTMLElement) {
+  // Let the capture state land in the DOM before it is cloned.
+  await nextFrame();
+  await nextFrame();
+  const { domToBlob } = await import(/* webpackPrefetch: true */ 'modern-screenshot');
+  return domToBlob(node, {
+    scale: SCALE,
     width: node.offsetWidth + SCREENSHOT_MARGIN * 2,
     height: node.offsetHeight + SCREENSHOT_MARGIN * 2,
     style: { padding: `${SCREENSHOT_MARGIN}px` },
     backgroundColor: colors.surface,
     filter: (el) => !(el instanceof HTMLElement) || el.dataset.screenshot !== 'hide'
-  }));
+  });
 }
 
 function triggerDownload(blob: Blob) {

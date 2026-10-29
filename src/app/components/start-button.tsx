@@ -198,6 +198,9 @@ export function StartButton({ targets }: StartButtonProps) {
       onClick={running ? stop : start}
       aria-label={running ? 'Stop speed test' : phase === 'done' ? 'Test again' : 'Start speed test'}
       title={running ? 'Stop' : phase === 'done' ? 'Test again' : 'Start test'}
+      /* Kept out of screenshots: the wordmark draws its own dot underneath, so a share image
+         reads as a plain "inshadow" lettering instead of a button. */
+      data-screenshot="hide"
       {...stylex.props(styles.go)}
     >
       <span aria-hidden {...stylex.props(styles.hit)} />

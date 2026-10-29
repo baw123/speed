@@ -45,10 +45,13 @@ const styles = stylex.create({
     paddingTop: 'clamp(112px, 18vh, 176px)',
     paddingBottom: 'clamp(28px, 6vh, 64px)'
   },
-  // The share card reads better as a portrait poster on mobile, so tighten the top pad while
-  // capturing. The media query gates this to narrow screens — desktop keeps its generous header.
+  // A portrait share card reads better with a shorter top pad. Gated to narrow screens so
+  // desktop captures keep the generous header.
   headerCapturingMobile: {
-    '@media (max-width: 760px)': { paddingTop: 'clamp(40px, 7vh, 72px)' }
+    '@media (max-width: 760px)': {
+      paddingTop: 'clamp(40px, 7vh, 72px)',
+      paddingBottom: 'clamp(20px, 4vh, 40px)'
+    }
   },
   hint: {
     marginTop: 'clamp(8px, 1.6vw, 20px)',
@@ -208,23 +211,31 @@ function Glow() {
   );
 }
 
+/** The wordmark sits at the top of the captured block. During a capture the start button is
+ *  filtered out of the image (leaving the "i" dot) and — on mobile — the top pad tightens. */
+function Header({ targets }: SpeedtestProps) {
+  const capturing = useCapturing();
+  return (
+    <header {...stylex.props(styles.header, capturing && styles.headerCapturingMobile)}>
+      <Wordmark button={<StartButton targets={targets} />} />
+      <Hint />
+      <div data-screenshot="hide" {...stylex.props(styles.screenshotGroup)}>
+        <ScreenshotButton relative>Screenshot</ScreenshotButton>
+        <span {...stylex.props(styles.saveHideMobile)}>
+          <ScreenshotButton relative alwaysSave>Save</ScreenshotButton>
+        </span>
+      </div>
+    </header>
+  );
+}
+
 /** The static layout; every live value is a small client leaf reading the provider. */
 export function Speedtest({ targets }: SpeedtestProps) {
-  const capturing = useCapturing();
   return (
     <ComposeContextProvider contexts={contexts}>
       <SpeedtestRoot>
         <Glow />
-        <header {...stylex.props(styles.header, capturing && styles.headerCapturingMobile)}>
-          <Wordmark button={capturing ? null : <StartButton targets={targets} />} />
-          <Hint />
-          <div data-screenshot="hide" {...stylex.props(styles.screenshotGroup)}>
-            <ScreenshotButton relative>Screenshot</ScreenshotButton>
-            <span {...stylex.props(styles.saveHideMobile)}>
-              <ScreenshotButton relative alwaysSave>Save</ScreenshotButton>
-            </span>
-          </div>
-        </header>
+        <Header targets={targets} />
 
         <div {...stylex.props(styles.row)}>
           <div {...stylex.props(styles.item)}>

@@ -135,6 +135,12 @@ export function Wordmark({ button }: WordmarkProps) {
           </radialGradient>
           <clipPath id="wordmark-xh"><rect x="-10" y="100" width="1100" height="88" /></clipPath>
         </defs>
+        {/* The dot of the "i". It sits under the start button on screen (the disc covers it) and
+            is what a share image shows once the button is filtered out. A flat fill instead of
+            url(#wordmark-lit) — modern-screenshot cannot serialise a gradient reference on a
+            shape and would drop the whole wordmark. #b3bcc5 is the colour that gradient produces
+            at this radius. */}
+        <circle cx="7.5" cy="60" r="7.5" fill="#b3bcc5" />
         <g {...stylex.props(styles.strokes, running && styles.strokesDim)}>
           {PATHS.slice(0, 3).map((d) => <path key={d} d={d} />)}
           <g {...stylex.props(styles.drift)}>
